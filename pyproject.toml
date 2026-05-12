@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kg-eval"
+version = "0.1.0"
+description = "Knowledge graph generation and evaluation toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "Sanchari" }
+]
+
+dependencies = [
+    "datasets",
+    "pandas",
+    "pyarrow"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["kg_eval*"]
