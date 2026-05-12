@@ -1,6 +1,7 @@
 from kg_eval.pipeline.process_dataset import load_dataset, extract_graphs
 from kg_eval.metrics.graph_metrics import compute_dataset_metrics
 from kg_eval.reports.report_writer import save_metrics_report
+from kg_eval.visualization.graph_viz import draw_graph
 
 
 def main():
@@ -15,6 +16,9 @@ def main():
     graphs = extract_graphs(df, question_col)
 
     print("\nTotal graphs:", len(graphs))
+
+    # visualize first graph
+    draw_graph(graphs[0], title="Sample Question Graph")
 
     summary, per_graph_metrics = compute_dataset_metrics(graphs)
 
