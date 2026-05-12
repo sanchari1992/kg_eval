@@ -16,7 +16,8 @@ authors = [
 dependencies = [
     "datasets",
     "pandas",
-    "pyarrow"
+    "pyarrow",
+    "networkx"
 ]
 
 [tool.setuptools.packages.find]
