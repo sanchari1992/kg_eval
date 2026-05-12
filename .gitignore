@@ -1,2 +1,3 @@
 /data/raw
 /kg_eval.egg-info
+*.pyc
