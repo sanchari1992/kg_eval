@@ -18,7 +18,8 @@ dependencies = [
     "pandas",
     "pyarrow",
     "networkx",
-    "matplotlib"
+    "matplotlib",
+    "spacy"
 ]
 
 [tool.setuptools.packages.find]

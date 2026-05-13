@@ -42,6 +42,9 @@ def compute_dataset_metrics(graphs):
         all_metrics.append(compute_basic_metrics(G))
 
     # aggregate
+    if len(all_metrics) == 0:
+        return {}, []
+
     summary = {
         "num_graphs": len(graphs),
         "avg_nodes": sum(m["num_nodes"] for m in all_metrics) / len(all_metrics),
