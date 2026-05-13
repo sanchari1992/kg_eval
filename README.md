@@ -319,5 +319,3 @@ Planned features:
 ---
 
 # License
-
-MIT License
