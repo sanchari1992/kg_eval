@@ -2,16 +2,18 @@ import networkx as nx
 import spacy
 
 
-# load NLP model once
 nlp = spacy.load("en_core_web_sm")
 
 
 def build_entity_graph(question: str):
     """
-    Build a simple entity-based graph using spaCy NER.
+    Build entity graph using spaCy entities.
 
-    Nodes = named entities
-    Edges = entity co-occurrence in sequence
+    Nodes:
+        entity text + semantic label
+
+    Edges:
+        sequential entity co-occurrence
     """
 
     doc = nlp(question)
@@ -19,19 +21,41 @@ def build_entity_graph(question: str):
     entities = []
 
     for ent in doc.ents:
+
         entity_text = ent.text.strip().lower()
 
-        if entity_text:
-            entities.append(entity_text)
+        if not entity_text:
+            continue
+
+        entities.append(
+            {
+                "text": entity_text,
+                "label": ent.label_
+            }
+        )
 
     G = nx.Graph()
 
-    # add entity nodes
-    for e in entities:
-        G.add_node(e)
+    # -------------------------
+    # add nodes with metadata
+    # -------------------------
 
-    # connect neighboring entities
+    for entity in entities:
+
+        G.add_node(
+            entity["text"],
+            entity_type=entity["label"]
+        )
+
+    # -------------------------
+    # add edges
+    # -------------------------
+
     for i in range(len(entities) - 1):
-        G.add_edge(entities[i], entities[i + 1])
+
+        source = entities[i]["text"]
+        target = entities[i + 1]["text"]
+
+        G.add_edge(source, target)
 
     return G
