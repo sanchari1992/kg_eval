@@ -5,7 +5,7 @@ def main():
 
     download_hf_dataset(
         dataset_name="UTAustin-AIHealth/MedHallu",
-        config_name="pqa_labeled",
+        config_name="pqa_artificial",
         output_dir="data/raw/medhallu"
     )
 
