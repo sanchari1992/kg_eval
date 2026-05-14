@@ -19,7 +19,8 @@ dependencies = [
     "pyarrow",
     "networkx",
     "matplotlib",
-    "spacy"
+    "spacy",
+    "tqdm"
 ]
 
 [tool.setuptools.packages.find]
