@@ -21,5 +21,5 @@ if __name__ == "__main__":
 
     jsonl_to_csv(
         jsonl_path="data/raw/medqa/US_qbank.jsonl",
-        csv_path="data.csv"
+        csv_path="data/raw/medqa/US_qbank.csv"
     )
