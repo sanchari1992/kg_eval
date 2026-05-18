@@ -118,7 +118,8 @@ This model is required for entity extraction.
 Currently tested on:
 (QA)
 - MedMCQA
--PubMedQA
+- PubMedQA
+- BioASQ
 
 (NonQA)
 - Med-HALT
