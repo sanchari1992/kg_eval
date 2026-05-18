@@ -116,9 +116,14 @@ This model is required for entity extraction.
 # Supported Datasets
 
 Currently tested on:
+(QA)
+- MedMCQA
+-PubMedQA
 
+(NonQA)
 - Med-HALT
 - MedHallu
+- Medhal
 
 ---
 

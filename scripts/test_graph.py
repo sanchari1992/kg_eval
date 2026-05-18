@@ -1,4 +1,5 @@
 import argparse
+import time
 from pathlib import Path
 
 from kg_eval.pipeline.process_dataset import (
@@ -20,6 +21,12 @@ from kg_eval.visualization.graph_viz import (
 
 
 def main():
+
+    # -------------------------
+    # start timer
+    # -------------------------
+
+    start_time = time.time()
 
     parser = argparse.ArgumentParser(
         description="Run KG evaluation pipeline"
@@ -128,6 +135,16 @@ def main():
         per_graph_metrics,
         str(report_path)
     )
+
+    # -------------------------
+    # end timer
+    # -------------------------
+
+    end_time = time.time()
+
+    total_time = end_time - start_time
+
+    print(f"\nTotal runtime: {total_time:.2f} seconds")
 
 
 if __name__ == "__main__":
