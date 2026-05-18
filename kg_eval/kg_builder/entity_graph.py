@@ -88,6 +88,9 @@ def build_entity_graphs_batch(
     """
     Faster batch graph generation using spaCy pipe.
 
+    Avoids recomputing duplicate questions
+    using an internal graph cache.
+
     Parameters
     ----------
     questions : list[str]
@@ -103,8 +106,34 @@ def build_entity_graphs_batch(
 
     graphs = []
 
+    # ---------------------------------------------------
+    # Cache already-built graphs
+    # ---------------------------------------------------
+
+    graph_cache = {}
+
+    # ---------------------------------------------------
+    # Find unique questions only
+    # ---------------------------------------------------
+
+    unique_questions = []
+
+    for question in questions:
+
+        normalized_question = question.strip().lower()
+
+        if normalized_question not in graph_cache:
+
+            graph_cache[normalized_question] = None
+
+            unique_questions.append(question)
+
+    # ---------------------------------------------------
+    # Run spaCy only on unique questions
+    # ---------------------------------------------------
+
     docs = nlp.pipe(
-        questions,
+        unique_questions,
         batch_size=batch_size
     )
 
@@ -116,11 +145,15 @@ def build_entity_graphs_batch(
 
         docs = tqdm(
             docs,
-            total=len(questions),
+            total=len(unique_questions),
             desc="Building entity graphs"
         )
 
-    for doc in docs:
+    # ---------------------------------------------------
+    # Build graphs for unique questions
+    # ---------------------------------------------------
+
+    for question, doc in zip(unique_questions, docs):
 
         entities = []
 
@@ -154,6 +187,20 @@ def build_entity_graphs_batch(
 
             G.add_edge(source, target)
 
-        graphs.append(G)
+        normalized_question = question.strip().lower()
+
+        graph_cache[normalized_question] = G
+
+    # ---------------------------------------------------
+    # Reconstruct graph list in original order
+    # ---------------------------------------------------
+
+    for question in questions:
+
+        normalized_question = question.strip().lower()
+
+        graphs.append(
+            graph_cache[normalized_question]
+        )
 
     return graphs
