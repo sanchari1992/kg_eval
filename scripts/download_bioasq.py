@@ -5,7 +5,7 @@ def main():
 
     download_hf_dataset(
         dataset_name="kroshan/BioASQ",
-        config_name="train",
+        config_name=None,
         output_dir="data/raw/bioasq"
     )
 
