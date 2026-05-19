@@ -124,6 +124,7 @@ Currently tested on:
 - BiQA
 - HealthSearchQA
 - LiveQA
+- MedicationQA
 
 
 (NonQA)
