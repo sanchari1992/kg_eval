@@ -123,6 +123,7 @@ Currently tested on:
 - BioASQ
 - BiQA
 - HealthSearchQA
+- LiveQA
 
 
 (NonQA)
