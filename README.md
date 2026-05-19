@@ -122,6 +122,8 @@ Currently tested on:
 - PubMedQA
 - BioASQ
 - BiQA
+- HealthSearchQA
+
 
 (NonQA)
 - Med-HALT
