@@ -127,6 +127,8 @@ Currently tested on:
 - MedicationQA
 - MedQuAD
 - MediQA
+- MedRevQA
+- MedChangeQA
 
 
 (NonQA)
