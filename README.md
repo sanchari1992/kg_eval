@@ -129,6 +129,7 @@ Currently tested on:
 - MediQA
 - MedRevQA
 - MedChangeQA
+- MedAESQA
 
 
 (NonQA)
