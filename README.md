@@ -130,6 +130,7 @@ Currently tested on:
 - MedRevQA
 - MedChangeQA
 - MedAESQA
+- COVID-QA
 
 
 (NonQA)
