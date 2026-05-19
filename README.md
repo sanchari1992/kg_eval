@@ -125,6 +125,8 @@ Currently tested on:
 - HealthSearchQA
 - LiveQA
 - MedicationQA
+- MedQuAD
+
 
 
 (NonQA)
