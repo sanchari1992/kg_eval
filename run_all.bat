@@ -90,5 +90,11 @@ python scripts/test_graph.py ^
   --question_col question ^
   --report_path data/raw/pubmedqa/report.json
 
+echo Running HealthBench...
+python scripts/test_graph.py ^
+  --file_path data/raw/healthbench/train.csv ^
+  --question_col question ^
+  --report_path data/raw/healthbench/report.json
+
 echo All datasets processed!
 pause
