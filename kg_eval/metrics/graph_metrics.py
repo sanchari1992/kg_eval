@@ -3,7 +3,10 @@ import networkx as nx
 from kg_eval.metrics.semantic_metrics import (
     compute_entity_type_diversity,
     compute_unique_entity_ratio,
-    compute_relation_entropy
+    compute_relation_entropy,
+    compute_entity_interaction_density,
+    compute_context_expansion_ratio,
+    compute_ontology_depth_score
 )
 
 from kg_eval.metrics.reasoning_metrics import (
@@ -12,7 +15,8 @@ from kg_eval.metrics.reasoning_metrics import (
     compute_structural_reasoning_index,
     compute_avg_shortest_path,
     compute_branching_factor,
-    compute_graph_centralization
+    compute_graph_centralization,
+    compute_reasoning_path_complexity
 )
 
 
@@ -110,6 +114,26 @@ def compute_basic_metrics(G: nx.Graph):
         compute_graph_centralization(G)
     )
 
+    # -------------------------
+    # new benchmark realism metrics
+    # -------------------------
+
+    metrics["entity_interaction_density"] = (
+        compute_entity_interaction_density(G)
+    )
+
+    metrics["context_expansion_ratio"] = (
+        compute_context_expansion_ratio(G)
+    )
+
+    metrics["ontology_depth_score"] = (
+        compute_ontology_depth_score(G)
+    )
+
+    metrics["reasoning_path_complexity"] = (
+        compute_reasoning_path_complexity(G)
+    )
+
     return metrics
 
 
@@ -187,6 +211,22 @@ def compute_dataset_metrics(graphs):
 
         "avg_graph_centralization":
             sum(m["graph_centralization"] for m in all_metrics)
+            / len(all_metrics),
+        
+        "avg_entity_interaction_density":
+            sum(m["entity_interaction_density"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_context_expansion_ratio":
+            sum(m["context_expansion_ratio"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_ontology_depth_score":
+            sum(m["ontology_depth_score"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_reasoning_path_complexity":
+            sum(m["reasoning_path_complexity"] for m in all_metrics)
             / len(all_metrics),
     }
 

@@ -2,13 +2,6 @@ import networkx as nx
 
 
 def compute_constraint_complexity(G):
-    """
-    Approximate reasoning constraints.
-
-    Uses:
-    - node count
-    - entity diversity
-    """
 
     num_nodes = G.number_of_nodes()
 
@@ -25,11 +18,6 @@ def compute_constraint_complexity(G):
 
 
 def compute_graph_expansion_ratio(G):
-    """
-    Approximate implicit reasoning burden.
-
-    GER > 1 implies additional reasoning needed.
-    """
 
     base_size = G.number_of_nodes()
 
@@ -49,9 +37,6 @@ def compute_graph_expansion_ratio(G):
 
 
 def compute_structural_reasoning_index(G):
-    """
-    Combined reasoning difficulty metric.
-    """
 
     cc = compute_constraint_complexity(G)
 
@@ -61,9 +46,6 @@ def compute_structural_reasoning_index(G):
 
 
 def compute_avg_shortest_path(G):
-    """
-    Multi-hop reasoning approximation.
-    """
 
     if (
         G.number_of_nodes() <= 1
@@ -75,9 +57,6 @@ def compute_avg_shortest_path(G):
 
 
 def compute_branching_factor(G):
-    """
-    Average branching per node.
-    """
 
     num_nodes = G.number_of_nodes()
 
@@ -88,9 +67,6 @@ def compute_branching_factor(G):
 
 
 def compute_graph_centralization(G):
-    """
-    Measures dependency on central hub nodes.
-    """
 
     if G.number_of_nodes() == 0:
         return 0.0
@@ -113,3 +89,34 @@ def compute_graph_centralization(G):
         return 0.0
 
     return numerator / denominator
+
+
+# ==========================================================
+# NEW CONFERENCE-WORTHY METRIC
+# ==========================================================
+
+def compute_reasoning_path_complexity(G):
+    """
+    Measures multi-hop inferential burden.
+
+    Clinical benchmark questions usually require
+    longer reasoning chains between entities.
+
+    Uses:
+    - average shortest path
+    - graph diameter
+
+    Combines local and global reasoning difficulty.
+    """
+
+    if (
+        G.number_of_nodes() <= 1
+        or not nx.is_connected(G)
+    ):
+        return 0.0
+
+    avg_path = nx.average_shortest_path_length(G)
+
+    diameter = nx.diameter(G)
+
+    return avg_path * diameter

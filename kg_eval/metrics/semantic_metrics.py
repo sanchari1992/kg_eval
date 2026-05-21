@@ -69,3 +69,79 @@ def compute_top_entity_types(G, top_k=5):
     counter = Counter(entity_types)
 
     return counter.most_common(top_k)
+
+
+# ==========================================================
+# NEW CONFERENCE-WORTHY METRICS
+# ==========================================================
+
+def compute_entity_interaction_density(G):
+    """
+    Measures how densely entities interact.
+
+    High values indicate compressed biomedical
+    relational structure typical of benchmark questions.
+    """
+
+    num_nodes = G.number_of_nodes()
+
+    if num_nodes == 0:
+        return 0.0
+
+    return G.number_of_edges() / num_nodes
+
+
+def compute_context_expansion_ratio(G):
+    """
+    Measures contextual overload relative to core intent.
+
+    Assumes nodes tagged as:
+    node_role = "context" or "intent"
+
+    Benchmark-generated questions usually contain
+    large contextual scaffolding.
+    """
+
+    context_nodes = 0
+    intent_nodes = 0
+
+    for _, attrs in G.nodes(data=True):
+
+        role = attrs.get("node_role")
+
+        if role == "context":
+            context_nodes += 1
+
+        elif role == "intent":
+            intent_nodes += 1
+
+    if intent_nodes == 0:
+        return float(context_nodes)
+
+    return context_nodes / intent_nodes
+
+
+def compute_ontology_depth_score(G):
+    """
+    Measures biomedical specialization depth.
+
+    Requires optional attribute:
+    ontology_depth
+
+    Deep ontology placement indicates highly
+    technical/generated biomedical language.
+    """
+
+    depths = []
+
+    for _, attrs in G.nodes(data=True):
+
+        depth = attrs.get("ontology_depth")
+
+        if depth is not None:
+            depths.append(depth)
+
+    if len(depths) == 0:
+        return 0.0
+
+    return sum(depths) / len(depths)

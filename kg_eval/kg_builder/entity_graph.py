@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 # ---------------------------------------------------
 # Load spaCy model ONCE
-# Disable unnecessary components for speed
 # ---------------------------------------------------
 
 nlp = spacy.load(
@@ -20,12 +19,98 @@ nlp = spacy.load(
 )
 
 
+# ===================================================
+# Lightweight ontology depth estimates
+# ===================================================
+
+ONTOLOGY_DEPTHS = {
+
+    # ---------------------------------
+    # simple consumer concepts
+    # ---------------------------------
+
+    "cold": 1,
+    "common cold": 1,
+    "blister": 1,
+    "zinc lozenges": 2,
+
+    # ---------------------------------
+    # moderate clinical concepts
+    # ---------------------------------
+
+    "hypertension": 3,
+    "hypercholesterolemia": 3,
+    "arthritis": 3,
+    "knee pain": 3,
+    "tantrums": 2,
+
+    # ---------------------------------
+    # advanced biomedical concepts
+    # ---------------------------------
+
+    "autophagic cell death": 7,
+    "doxorubicin-resistant": 8,
+    "xenografts": 8,
+    "sirtuin 1": 7,
+    "mcf-7/adr": 8,
+    "monosodium urate crystals": 6,
+    "spinocerebellar ataxia type 3": 7,
+    "pilomatricoma": 6,
+}
+
+
+def lookup_ontology_depth(entity_text):
+    """
+    Approximate biomedical specialization depth.
+
+    Higher values indicate:
+    - more technical concepts
+    - ontology-deep biomedical entities
+    """
+
+    return ONTOLOGY_DEPTHS.get(
+        entity_text.lower(),
+        2
+    )
+
+
+# ===================================================
+# Node role assignment
+# ===================================================
+
+def assign_node_role(entity, total_entities, idx):
+    """
+    Approximate contextual role.
+
+    Heuristic:
+    - earlier entities tend to be context
+    - later entities closer to question intent
+
+    Helps distinguish:
+    - clinical narrative questions
+    - direct consumer questions
+    """
+
+    if total_entities <= 2:
+        return "intent"
+
+    # later entities = likely intent
+    if idx >= total_entities * 0.6:
+        return "intent"
+
+    return "context"
+
+
+# ===================================================
+# Single graph builder
+# ===================================================
+
 def build_entity_graph(question: str):
     """
     Build entity graph using spaCy entities.
 
     Nodes:
-        entity text + semantic label
+        entity text + semantic annotations
 
     Edges:
         sequential entity co-occurrence
@@ -56,14 +141,26 @@ def build_entity_graph(question: str):
     G = nx.Graph()
 
     # ---------------------------------------------------
-    # Add nodes
+    # Add nodes with semantic annotations
     # ---------------------------------------------------
 
-    for entity in entities:
+    for idx, entity in enumerate(entities):
 
         G.add_node(
+
             entity["text"],
-            entity_type=entity["label"]
+
+            entity_type=entity["label"],
+
+            node_role=assign_node_role(
+                entity,
+                len(entities),
+                idx
+            ),
+
+            ontology_depth=lookup_ontology_depth(
+                entity["text"]
+            )
         )
 
     # ---------------------------------------------------
@@ -79,6 +176,10 @@ def build_entity_graph(question: str):
 
     return G
 
+
+# ===================================================
+# Batch graph builder
+# ===================================================
 
 def build_entity_graphs_batch(
     questions,
@@ -157,6 +258,10 @@ def build_entity_graphs_batch(
 
         entities = []
 
+        # ---------------------------------------------
+        # Extract entities
+        # ---------------------------------------------
+
         for ent in doc.ents:
 
             entity_text = ent.text.strip().lower()
@@ -173,12 +278,32 @@ def build_entity_graphs_batch(
 
         G = nx.Graph()
 
-        for entity in entities:
+        # ---------------------------------------------
+        # Add annotated nodes
+        # ---------------------------------------------
+
+        for idx, entity in enumerate(entities):
 
             G.add_node(
+
                 entity["text"],
-                entity_type=entity["label"]
+
+                entity_type=entity["label"],
+
+                node_role=assign_node_role(
+                    entity,
+                    len(entities),
+                    idx
+                ),
+
+                ontology_depth=lookup_ontology_depth(
+                    entity["text"]
+                )
             )
+
+        # ---------------------------------------------
+        # Add sequential edges
+        # ---------------------------------------------
 
         for i in range(len(entities) - 1):
 
