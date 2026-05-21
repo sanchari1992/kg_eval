@@ -64,6 +64,7 @@ DATASET_ORDER = [
     "mediqa",
     "healthsearchqa",
     "medicationqa",
+    "healthbench"
 ]
 
 
