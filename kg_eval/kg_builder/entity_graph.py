@@ -12,66 +12,10 @@ nlp = spacy.load(
     "en_core_web_sm",
     disable=[
         "tagger",
-        "parser",
         "lemmatizer",
         "attribute_ruler"
     ]
 )
-
-
-# ===================================================
-# Lightweight ontology depth estimates
-# ===================================================
-
-ONTOLOGY_DEPTHS = {
-
-    # ---------------------------------
-    # simple consumer concepts
-    # ---------------------------------
-
-    "cold": 1,
-    "common cold": 1,
-    "blister": 1,
-    "zinc lozenges": 2,
-
-    # ---------------------------------
-    # moderate clinical concepts
-    # ---------------------------------
-
-    "hypertension": 3,
-    "hypercholesterolemia": 3,
-    "arthritis": 3,
-    "knee pain": 3,
-    "tantrums": 2,
-
-    # ---------------------------------
-    # advanced biomedical concepts
-    # ---------------------------------
-
-    "autophagic cell death": 7,
-    "doxorubicin-resistant": 8,
-    "xenografts": 8,
-    "sirtuin 1": 7,
-    "mcf-7/adr": 8,
-    "monosodium urate crystals": 6,
-    "spinocerebellar ataxia type 3": 7,
-    "pilomatricoma": 6,
-}
-
-
-def lookup_ontology_depth(entity_text):
-    """
-    Approximate biomedical specialization depth.
-
-    Higher values indicate:
-    - more technical concepts
-    - ontology-deep biomedical entities
-    """
-
-    return ONTOLOGY_DEPTHS.get(
-        entity_text.lower(),
-        2
-    )
 
 
 # ===================================================
@@ -80,21 +24,14 @@ def lookup_ontology_depth(entity_text):
 
 def assign_node_role(entity, total_entities, idx):
     """
-    Approximate contextual role.
-
     Heuristic:
-    - earlier entities tend to be context
-    - later entities closer to question intent
-
-    Helps distinguish:
-    - clinical narrative questions
-    - direct consumer questions
+    - early entities = context
+    - late entities = intent
     """
 
     if total_entities <= 2:
         return "intent"
 
-    # later entities = likely intent
     if idx >= total_entities * 0.6:
         return "intent"
 
@@ -102,83 +39,85 @@ def assign_node_role(entity, total_entities, idx):
 
 
 # ===================================================
-# Single graph builder
+# Grammar-based sentence complexity helpers
+# ===================================================
+
+def compute_dependency_depth(token):
+    """
+    Approximate syntactic tree depth using recursion.
+    """
+
+    if not list(token.children):
+        return 1
+
+    return 1 + max(
+        compute_dependency_depth(child)
+        for child in token.children
+    )
+
+
+def sentence_complexity(doc):
+    """
+    Mean dependency depth across tokens.
+    """
+    depths = [compute_dependency_depth(t) for t in doc]
+    return sum(depths) / len(depths) if depths else 0.0
+
+
+# ===================================================
+# Graph builder
 # ===================================================
 
 def build_entity_graph(question: str):
     """
-    Build entity graph using spaCy entities.
-
-    Nodes:
-        entity text + semantic annotations
-
-    Edges:
-        sequential entity co-occurrence
+    Build entity graph using spaCy entities + grammar signals.
     """
 
     doc = nlp(question)
 
     entities = []
 
-    # ---------------------------------------------------
-    # Extract entities
-    # ---------------------------------------------------
-
     for ent in doc.ents:
 
-        entity_text = ent.text.strip().lower()
-
-        if not entity_text:
+        text = ent.text.strip().lower()
+        if not text:
             continue
 
-        entities.append(
-            {
-                "text": entity_text,
-                "label": ent.label_
-            }
-        )
+        entities.append({
+            "text": text,
+            "label": ent.label_
+        })
 
     G = nx.Graph()
 
-    # ---------------------------------------------------
-    # Add nodes with semantic annotations
-    # ---------------------------------------------------
+    # store sentence-level grammar feature at graph level
+    G.graph["sentence_complexity"] = sentence_complexity(doc)
 
-    for idx, entity in enumerate(entities):
+    # -------------------------
+    # nodes
+    # -------------------------
+    for idx, ent in enumerate(entities):
 
         G.add_node(
-
-            entity["text"],
-
-            entity_type=entity["label"],
-
-            node_role=assign_node_role(
-                entity,
-                len(entities),
-                idx
-            ),
-
-            ontology_depth=lookup_ontology_depth(
-                entity["text"]
-            )
+            ent["text"],
+            entity_type=ent["label"],
+            node_role=assign_node_role(ent, len(entities), idx)
         )
 
-    # ---------------------------------------------------
-    # Add sequential edges
-    # ---------------------------------------------------
-
+    # -------------------------
+    # edges
+    # -------------------------
     for i in range(len(entities) - 1):
-
-        source = entities[i]["text"]
-        target = entities[i + 1]["text"]
-
-        G.add_edge(source, target)
+        G.add_edge(
+            entities[i]["text"],
+            entities[i + 1]["text"]
+        )
 
     return G
 
 
 # ===================================================
-# Batch graph builder
+# Batch builder
 # ===================================================
 
 def build_entity_graphs_batch(
@@ -186,146 +125,59 @@ def build_entity_graphs_batch(
     batch_size=64,
     show_progress=True
 ):
-    """
-    Faster batch graph generation using spaCy pipe.
-
-    Avoids recomputing duplicate questions
-    using an internal graph cache.
-
-    Parameters
-    ----------
-    questions : list[str]
-
-    batch_size : int
-
-    show_progress : bool
-
-    Returns
-    -------
-    list[nx.Graph]
-    """
-
-    graphs = []
-
-    # ---------------------------------------------------
-    # Cache already-built graphs
-    # ---------------------------------------------------
 
     graph_cache = {}
-
-    # ---------------------------------------------------
-    # Find unique questions only
-    # ---------------------------------------------------
-
     unique_questions = []
 
-    for question in questions:
+    for q in questions:
 
-        normalized_question = question.strip().lower()
+        norm = q.strip().lower()
 
-        if normalized_question not in graph_cache:
+        if norm not in graph_cache:
+            graph_cache[norm] = None
+            unique_questions.append(q)
 
-            graph_cache[normalized_question] = None
-
-            unique_questions.append(question)
-
-    # ---------------------------------------------------
-    # Run spaCy only on unique questions
-    # ---------------------------------------------------
-
-    docs = nlp.pipe(
-        unique_questions,
-        batch_size=batch_size
-    )
-
-    # ---------------------------------------------------
-    # Optional progress bar
-    # ---------------------------------------------------
+    docs = nlp.pipe(unique_questions, batch_size=batch_size)
 
     if show_progress:
-
-        docs = tqdm(
-            docs,
-            total=len(unique_questions),
-            desc="Building entity graphs"
-        )
-
-    # ---------------------------------------------------
-    # Build graphs for unique questions
-    # ---------------------------------------------------
+        docs = tqdm(docs, total=len(unique_questions), desc="Building graphs")
 
     for question, doc in zip(unique_questions, docs):
 
         entities = []
 
-        # ---------------------------------------------
-        # Extract entities
-        # ---------------------------------------------
-
         for ent in doc.ents:
 
-            entity_text = ent.text.strip().lower()
-
-            if not entity_text:
+            text = ent.text.strip().lower()
+            if not text:
                 continue
 
-            entities.append(
-                {
-                    "text": entity_text,
-                    "label": ent.label_
-                }
-            )
+            entities.append({
+                "text": text,
+                "label": ent.label_
+            })
 
         G = nx.Graph()
 
-        # ---------------------------------------------
-        # Add annotated nodes
-        # ---------------------------------------------
+        G.graph["sentence_complexity"] = sentence_complexity(doc)
 
-        for idx, entity in enumerate(entities):
+        for idx, ent in enumerate(entities):
 
             G.add_node(
-
-                entity["text"],
-
-                entity_type=entity["label"],
-
-                node_role=assign_node_role(
-                    entity,
-                    len(entities),
-                    idx
-                ),
-
-                ontology_depth=lookup_ontology_depth(
-                    entity["text"]
-                )
+                ent["text"],
+                entity_type=ent["label"],
+                node_role=assign_node_role(ent, len(entities), idx)
             )
 
-        # ---------------------------------------------
-        # Add sequential edges
-        # ---------------------------------------------
-
         for i in range(len(entities) - 1):
+            G.add_edge(
+                entities[i]["text"],
+                entities[i + 1]["text"]
+            )
 
-            source = entities[i]["text"]
-            target = entities[i + 1]["text"]
+        graph_cache[question.strip().lower()] = G
 
-            G.add_edge(source, target)
-
-        normalized_question = question.strip().lower()
-
-        graph_cache[normalized_question] = G
-
-    # ---------------------------------------------------
-    # Reconstruct graph list in original order
-    # ---------------------------------------------------
-
-    for question in questions:
-
-        normalized_question = question.strip().lower()
-
-        graphs.append(
-            graph_cache[normalized_question]
-        )
-
-    return graphs
+    return [
+        graph_cache[q.strip().lower()]
+        for q in questions
+    ]

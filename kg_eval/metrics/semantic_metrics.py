@@ -2,47 +2,43 @@ from collections import Counter
 import math
 
 
+# =========================
+# existing metrics unchanged
+# =========================
+
 def extract_entity_types(G):
-
-    entity_types = []
-
-    for _, attrs in G.nodes(data=True):
-
-        entity_type = attrs.get("entity_type")
-
-        if entity_type:
-            entity_types.append(entity_type)
-
-    return entity_types
+    return [
+        attrs.get("entity_type")
+        for _, attrs in G.nodes(data=True)
+        if attrs.get("entity_type")
+    ]
 
 
 def compute_entity_type_diversity(G):
 
     entity_types = extract_entity_types(G)
 
-    if len(entity_types) == 0:
+    if not entity_types:
         return 0.0
 
-    unique_types = len(set(entity_types))
-
-    return unique_types / len(entity_types)
+    return len(set(entity_types)) / len(entity_types)
 
 
 def compute_unique_entity_ratio(G):
 
-    entities = list(G.nodes())
+    nodes = list(G.nodes())
 
-    if len(entities) == 0:
+    if not nodes:
         return 0.0
 
-    return len(set(entities)) / len(entities)
+    return len(set(nodes)) / len(nodes)
 
 
 def compute_relation_entropy(G):
 
     degrees = [d for _, d in G.degree()]
 
-    if len(degrees) == 0:
+    if not degrees:
         return 0.0
 
     total = sum(degrees)
@@ -53,95 +49,105 @@ def compute_relation_entropy(G):
     entropy = 0.0
 
     for d in degrees:
-
         p = d / total
-
         if p > 0:
             entropy -= p * math.log2(p)
 
     return entropy
 
 
-def compute_top_entity_types(G, top_k=5):
-
-    entity_types = extract_entity_types(G)
-
-    counter = Counter(entity_types)
-
-    return counter.most_common(top_k)
-
-
-# ==========================================================
-# NEW CONFERENCE-WORTHY METRICS
-# ==========================================================
-
 def compute_entity_interaction_density(G):
-    """
-    Measures how densely entities interact.
 
-    High values indicate compressed biomedical
-    relational structure typical of benchmark questions.
-    """
-
-    num_nodes = G.number_of_nodes()
-
-    if num_nodes == 0:
+    n = G.number_of_nodes()
+    if n == 0:
         return 0.0
-
-    return G.number_of_edges() / num_nodes
+    return G.number_of_edges() / n
 
 
 def compute_context_expansion_ratio(G):
-    """
-    Measures contextual overload relative to core intent.
 
-    Assumes nodes tagged as:
-    node_role = "context" or "intent"
-
-    Benchmark-generated questions usually contain
-    large contextual scaffolding.
-    """
-
-    context_nodes = 0
-    intent_nodes = 0
+    context = 0
+    intent = 0
 
     for _, attrs in G.nodes(data=True):
 
         role = attrs.get("node_role")
 
         if role == "context":
-            context_nodes += 1
-
+            context += 1
         elif role == "intent":
-            intent_nodes += 1
+            intent += 1
 
-    if intent_nodes == 0:
-        return float(context_nodes)
+    if intent == 0:
+        return float(context)
 
-    return context_nodes / intent_nodes
+    return context / intent
 
 
-def compute_ontology_depth_score(G):
+# ==========================================================
+# NEW: GRAMMAR / LEXICAL METRICS (replaces ontology)
+# ==========================================================
+
+def compute_sentence_complexity_score(G):
     """
-    Measures biomedical specialization depth.
-
-    Requires optional attribute:
-    ontology_depth
-
-    Deep ontology placement indicates highly
-    technical/generated biomedical language.
+    Extracted from graph-level grammar feature.
     """
 
-    depths = []
+    return G.graph.get("sentence_complexity", 0.0)
 
-    for _, attrs in G.nodes(data=True):
 
-        depth = attrs.get("ontology_depth")
+def compute_lexical_diversity(G):
+    """
+    Type-token ratio over entity tokens.
+    """
 
-        if depth is not None:
-            depths.append(depth)
+    tokens = list(G.nodes())
 
-    if len(depths) == 0:
+    if not tokens:
         return 0.0
 
-    return sum(depths) / len(depths)
+    return len(set(tokens)) / len(tokens)
+
+
+def compute_avg_token_length(G):
+    """
+    Proxy for lexical difficulty.
+    """
+
+    tokens = list(G.nodes())
+
+    if not tokens:
+        return 0.0
+
+    return sum(len(t) for t in tokens) / len(tokens)
+
+
+def compute_content_word_ratio(G):
+    """
+    Heuristic: long tokens likely content words.
+    """
+
+    tokens = list(G.nodes())
+
+    if not tokens:
+        return 0.0
+
+    content = [t for t in tokens if len(t) > 5]
+
+    return len(content) / len(tokens)
+
+
+def compute_clause_proxy_complexity(G):
+    """
+    Proxy clause complexity:
+    combines edges + sentence complexity.
+    """
+
+    n = G.number_of_nodes()
+    if n == 0:
+        return 0.0
+
+    base = G.number_of_edges() / n
+    sent = compute_sentence_complexity_score(G)
+
+    return base * (1 + sent)
