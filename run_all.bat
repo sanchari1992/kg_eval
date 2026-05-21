@@ -97,4 +97,8 @@ python scripts/test_graph.py ^
   --report_path data/raw/healthbench/report.json
 
 echo All datasets processed!
+
+echo Running Plots
+python .\scripts\plot_reports_metrics.py
+
 pause
