@@ -20,7 +20,8 @@ dependencies = [
     "networkx",
     "matplotlib",
     "spacy",
-    "tqdm"
+    "tqdm",
+    "numpy"
 ]
 
 [tool.setuptools.packages.find]
