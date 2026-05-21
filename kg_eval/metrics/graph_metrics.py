@@ -6,6 +6,15 @@ from kg_eval.metrics.semantic_metrics import (
     compute_relation_entropy
 )
 
+from kg_eval.metrics.reasoning_metrics import (
+    compute_constraint_complexity,
+    compute_graph_expansion_ratio,
+    compute_structural_reasoning_index,
+    compute_avg_shortest_path,
+    compute_branching_factor,
+    compute_graph_centralization
+)
+
 
 def compute_basic_metrics(G: nx.Graph):
     """
@@ -73,6 +82,34 @@ def compute_basic_metrics(G: nx.Graph):
         compute_relation_entropy(G)
     )
 
+        # -------------------------
+    # reasoning metrics
+    # -------------------------
+
+    metrics["constraint_complexity"] = (
+        compute_constraint_complexity(G)
+    )
+
+    metrics["graph_expansion_ratio"] = (
+        compute_graph_expansion_ratio(G)
+    )
+
+    metrics["structural_reasoning_index"] = (
+        compute_structural_reasoning_index(G)
+    )
+
+    metrics["avg_shortest_path"] = (
+        compute_avg_shortest_path(G)
+    )
+
+    metrics["branching_factor"] = (
+        compute_branching_factor(G)
+    )
+
+    metrics["graph_centralization"] = (
+        compute_graph_centralization(G)
+    )
+
     return metrics
 
 
@@ -126,6 +163,30 @@ def compute_dataset_metrics(graphs):
 
         "avg_relation_entropy":
             sum(m["relation_entropy"] for m in all_metrics)
+            / len(all_metrics),
+        
+        "avg_constraint_complexity":
+            sum(m["constraint_complexity"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_graph_expansion_ratio":
+            sum(m["graph_expansion_ratio"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_structural_reasoning_index":
+            sum(m["structural_reasoning_index"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_shortest_path":
+            sum(m["avg_shortest_path"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_branching_factor":
+            sum(m["branching_factor"] for m in all_metrics)
+            / len(all_metrics),
+
+        "avg_graph_centralization":
+            sum(m["graph_centralization"] for m in all_metrics)
             / len(all_metrics),
     }
 

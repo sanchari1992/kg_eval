@@ -1,3 +1,4 @@
 /data/raw
 /kg_eval.egg-info
 *.pyc
+/data/metric_plots
