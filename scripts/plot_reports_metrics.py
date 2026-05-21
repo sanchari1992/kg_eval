@@ -4,18 +4,67 @@ import os
 import json
 import matplotlib.pyplot as plt
 
-# Path setup
+# =========================
+# PATH SETUP
+# =========================
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
 OUTPUT_DIR = os.path.join(BASE_DIR, "data", "metric_plots")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Store metric values across folders
+# =========================
+# CUSTOM DATASET ORDER
+# =========================
+
+DATASET_ORDER = [
+    # Scientific datasets
+    "pubmedqa",
+    "medhallu",
+    "medhalt",
+    "bioasq",
+    "medmcqa",
+    "medqa",
+    "medrevqa",
+    "medchangeqa",
+    "covidqa",
+
+    # Consumer datasets
+    "healthbench",
+    "biqa",
+    "medaesqa",
+    "medquad",
+    "mediqa",
+    "healthsearchqa",
+    "medicationqa",
+]
+
+# Scientific vs Consumer colors
+SCIENTIFIC_COLOR = "steelblue"
+CONSUMER_COLOR = "darkorange"
+
+SCIENTIFIC_DATASETS = {
+    "pubmedqa",
+    "medhallu",
+    "medhalt",
+    "bioasq",
+    "medmcqa",
+    "medqa",
+    "medrevqa",
+    "medchangeqa",
+    "covidqa",
+}
+
+# =========================
+# LOAD METRICS
+# =========================
+
 all_metrics = {}
 
-# Traverse each dataset folder
 for folder_name in os.listdir(RAW_DIR):
+
     folder_path = os.path.join(RAW_DIR, folder_name)
 
     if not os.path.isdir(folder_path):
@@ -35,7 +84,6 @@ for folder_name in os.listdir(RAW_DIR):
 
         for metric_name, metric_value in summary.items():
 
-            # Skip non-numeric metrics
             if not isinstance(metric_value, (int, float)):
                 continue
 
@@ -47,20 +95,53 @@ for folder_name in os.listdir(RAW_DIR):
     except Exception as e:
         print(f"[ERROR] Failed reading {report_path}: {e}")
 
-# Create one graph per metric
+# =========================
+# PLOT METRICS
+# =========================
+
 for metric_name, dataset_values in all_metrics.items():
 
-    folders = list(dataset_values.keys())
-    values = list(dataset_values.values())
+    ordered_folders = []
+    ordered_values = []
+    bar_colors = []
 
-    plt.figure(figsize=(12, 6))
-    plt.bar(folders, values)
+    for dataset_name in DATASET_ORDER:
 
-    plt.xlabel("Dataset Folder")
+        if dataset_name not in dataset_values:
+            continue
+
+        ordered_folders.append(dataset_name)
+        ordered_values.append(dataset_values[dataset_name])
+
+        if dataset_name in SCIENTIFIC_DATASETS:
+            bar_colors.append(SCIENTIFIC_COLOR)
+        else:
+            bar_colors.append(CONSUMER_COLOR)
+
+    plt.figure(figsize=(14, 6))
+
+    plt.bar(
+        ordered_folders,
+        ordered_values,
+        color=bar_colors
+    )
+
+    plt.xlabel("Datasets")
     plt.ylabel(metric_name)
-    plt.title(f"{metric_name} Across Datasets")
+    plt.title(f"{metric_name} Across Medical QA Benchmarks")
 
     plt.xticks(rotation=45, ha="right")
+
+    # Legend
+    from matplotlib.patches import Patch
+
+    legend_elements = [
+        Patch(facecolor=SCIENTIFIC_COLOR, label="Scientific Datasets"),
+        Patch(facecolor=CONSUMER_COLOR, label="Consumer Datasets")
+    ]
+
+    plt.legend(handles=legend_elements)
+
     plt.tight_layout()
 
     output_path = os.path.join(
@@ -68,7 +149,7 @@ for metric_name, dataset_values in all_metrics.items():
         f"{metric_name}.png"
     )
 
-    plt.savefig(output_path)
+    plt.savefig(output_path, dpi=300)
     plt.close()
 
     print(f"[SAVED] {output_path}")
