@@ -375,7 +375,6 @@ If you use this toolkit in your research, please cite our work:
 
 **A Graph-Based Audit Framework for Healthcare Question-Answering Benchmarks**
 
-```bibtex
 @article{medauditkg2026,
   title={A Graph-Based Audit Framework for Healthcare Question-Answering Benchmarks},
   author={Sanchari Biswas},
