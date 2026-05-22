@@ -1,12 +1,8 @@
 import pandas as pd
-
 from kg_eval.kg_builder.entity_graph import build_entity_graph
 
 
 def load_dataset(file_path: str):
-    """
-    Load CSV or parquet dataset.
-    """
 
     if file_path.endswith(".csv"):
         return pd.read_csv(file_path)
@@ -15,23 +11,25 @@ def load_dataset(file_path: str):
         return pd.read_parquet(file_path)
 
     else:
-        raise ValueError("Unsupported file format")
+        raise ValueError("Unsupported format")
 
 
 def extract_graphs(df: pd.DataFrame, question_col: str):
-    """
-    Generate one graph per question.
-    """
 
     graphs = []
 
-    for q in df[question_col].dropna():
+    for q in df[question_col]:
 
-        q = str(q)
+        if q is None:
+            continue
+
+        q = str(q).strip()
+
+        if not q:
+            continue
 
         G = build_entity_graph(q)
 
-        # skip empty graphs
         if G.number_of_nodes() > 0:
             graphs.append(G)
 

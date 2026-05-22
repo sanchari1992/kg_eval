@@ -24,23 +24,23 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 DATASET_ORDER = [
     "pubmedqa",
     "medhallu",
-    "medhalt",
+    # "medhalt",
     "bioasq",
     "medmcqa",
     "medrevqa",
     "medchangeqa",
     "covidqa",
-
-    "healthbench",
     "biqa",
     "medaesqa",
     "medquad",
     "mediqa",
     "healthsearchqa",
     "medicationqa",
+
+    "healthbench",
 ]
 
-SCIENTIFIC_DATASETS = set(DATASET_ORDER[:8])
+SCIENTIFIC_DATASETS = set(DATASET_ORDER[:13])
 
 
 # =========================
@@ -48,16 +48,69 @@ SCIENTIFIC_DATASETS = set(DATASET_ORDER[:8])
 # =========================
 
 KEY_METRICS = {
-    "avg_entity_interaction_density": "Entity Interaction Density",
-    "avg_reasoning_path_complexity": "Reasoning Path Complexity",
-    "avg_context_expansion_ratio": "Context Expansion Ratio",
 
-    # grammar-based metrics
-    "avg_sentence_complexity": "Sentence Complexity",
-    "avg_lexical_diversity": "Lexical Diversity",
-    "avg_avg_token_length": "Average Token Length",
-    "avg_content_word_ratio": "Content Word Ratio",
-    "avg_clause_proxy_complexity": "Clause Complexity Proxy",
+    # -----------------------------------------
+    # Structural-semantic metrics
+    # -----------------------------------------
+
+    "avg_entity_interaction_density":
+        "Entity Interaction Density",
+
+    "avg_reasoning_path_complexity":
+        "Reasoning Path Complexity",
+
+    "avg_context_expansion_ratio":
+        "Context Expansion Ratio",
+
+    # -----------------------------------------
+    # Grammar / linguistic metrics
+    # -----------------------------------------
+
+    "avg_sentence_complexity":
+        "Sentence Complexity",
+
+    "avg_lexical_diversity":
+        "Lexical Diversity",
+
+    "avg_token_length":
+        "Average Token Length",
+
+    "avg_content_word_ratio":
+        "Content Word Ratio",
+
+    "avg_clause_proxy_complexity":
+        "Clause Complexity Proxy",
+
+    # -----------------------------------------
+    # Novel paper metric
+    # -----------------------------------------
+
+    "avg_clinical_linguistic_complexity_index":
+        "Clinical Linguistic Complexity Index (CLCI)",
+}
+
+METRIC_GROUPS = {
+
+    "Reasoning Metrics": [
+
+        "avg_entity_interaction_density",
+        "avg_reasoning_path_complexity",
+        "avg_context_expansion_ratio",
+    ],
+
+    "Linguistic Metrics": [
+
+        "avg_sentence_complexity",
+        "avg_lexical_diversity",
+        "avg_token_length",
+        "avg_content_word_ratio",
+        "avg_clause_proxy_complexity",
+    ],
+
+    "Hybrid Complexity Metrics": [
+
+        "avg_clinical_linguistic_complexity_index"
+    ]
 }
 
 
@@ -270,3 +323,100 @@ plt.close()
 
 print(f"[SAVED] {out}")
 print("\nAll metric plots generated successfully.")
+
+# =========================================================
+# CATEGORY-LEVEL COMPARISON PLOTS
+# =========================================================
+
+for group_name, metric_list in METRIC_GROUPS.items():
+
+    scientific_scores = []
+    consumer_scores = []
+    labels = []
+
+    for metric_key in metric_list:
+
+        if metric_key not in all_metrics:
+            continue
+
+        dataset_values = all_metrics[metric_key]
+
+        sci_vals = [
+            v for k, v in dataset_values.items()
+            if k in SCIENTIFIC_DATASETS
+        ]
+
+        con_vals = [
+            v for k, v in dataset_values.items()
+            if k not in SCIENTIFIC_DATASETS
+        ]
+
+        scientific_scores.append(
+            safe_mean(sci_vals)
+        )
+
+        consumer_scores.append(
+            safe_mean(con_vals)
+        )
+
+        labels.append(
+            KEY_METRICS[metric_key]
+        )
+
+    if not labels:
+        continue
+
+    x = np.arange(len(labels))
+    width = 0.35
+
+    plt.figure(figsize=(12, 6))
+
+    plt.bar(
+        x - width/2,
+        scientific_scores,
+        width,
+        label="Scientific",
+        color="steelblue"
+    )
+
+    plt.bar(
+        x + width/2,
+        consumer_scores,
+        width,
+        label="Consumer",
+        color="darkorange"
+    )
+
+    plt.xticks(
+        x,
+        labels,
+        rotation=20,
+        ha="right"
+    )
+
+    plt.ylabel("Average Score")
+
+    plt.title(
+        f"{group_name}: Scientific vs Consumer QA",
+        fontsize=14,
+        fontweight="bold"
+    )
+
+    plt.legend()
+
+    plt.tight_layout()
+
+    output_path = os.path.join(
+        OUTPUT_DIR,
+        f"{group_name.lower().replace(' ', '_')}.png"
+    )
+
+    plt.savefig(
+        output_path,
+        dpi=400,
+        bbox_inches="tight"
+    )
+
+    plt.close()
+
+    print(f"[SAVED] {output_path}")

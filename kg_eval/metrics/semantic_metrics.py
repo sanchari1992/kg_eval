@@ -1,24 +1,31 @@
 from collections import Counter
 import math
+import numpy as np
 
 
-# =========================
-# existing metrics unchanged
-# =========================
+# ==========================================================
+# BASIC ENTITY METRICS
+# ==========================================================
 
 def extract_entity_types(G):
-    return [
-        attrs.get("entity_type")
-        for _, attrs in G.nodes(data=True)
-        if attrs.get("entity_type")
-    ]
+
+    entity_types = []
+
+    for _, attrs in G.nodes(data=True):
+
+        entity_type = attrs.get("entity_type")
+
+        if entity_type:
+            entity_types.append(entity_type)
+
+    return entity_types
 
 
 def compute_entity_type_diversity(G):
 
     entity_types = extract_entity_types(G)
 
-    if not entity_types:
+    if len(entity_types) == 0:
         return 0.0
 
     return len(set(entity_types)) / len(entity_types)
@@ -26,19 +33,19 @@ def compute_entity_type_diversity(G):
 
 def compute_unique_entity_ratio(G):
 
-    nodes = list(G.nodes())
+    entities = list(G.nodes())
 
-    if not nodes:
+    if len(entities) == 0:
         return 0.0
 
-    return len(set(nodes)) / len(nodes)
+    return len(set(entities)) / len(entities)
 
 
 def compute_relation_entropy(G):
 
     degrees = [d for _, d in G.degree()]
 
-    if not degrees:
+    if len(degrees) == 0:
         return 0.0
 
     total = sum(degrees)
@@ -49,59 +56,81 @@ def compute_relation_entropy(G):
     entropy = 0.0
 
     for d in degrees:
+
         p = d / total
+
         if p > 0:
             entropy -= p * math.log2(p)
 
     return entropy
 
 
+# ==========================================================
+# STRUCTURAL SEMANTIC METRICS
+# ==========================================================
+
 def compute_entity_interaction_density(G):
 
-    n = G.number_of_nodes()
-    if n == 0:
+    num_nodes = G.number_of_nodes()
+
+    if num_nodes == 0:
         return 0.0
-    return G.number_of_edges() / n
+
+    return G.number_of_edges() / num_nodes
 
 
 def compute_context_expansion_ratio(G):
 
-    context = 0
-    intent = 0
+    context_nodes = 0
+    intent_nodes = 0
 
     for _, attrs in G.nodes(data=True):
 
         role = attrs.get("node_role")
 
         if role == "context":
-            context += 1
+            context_nodes += 1
+
         elif role == "intent":
-            intent += 1
+            intent_nodes += 1
 
-    if intent == 0:
-        return float(context)
+    if intent_nodes == 0:
+        return float(context_nodes)
 
-    return context / intent
+    return context_nodes / intent_nodes
 
 
 # ==========================================================
-# NEW: GRAMMAR / LEXICAL METRICS (replaces ontology)
+# NLP / GRAMMAR METRICS
 # ==========================================================
 
 def compute_sentence_complexity_score(G):
-    """
-    Extracted from graph-level grammar feature.
-    """
 
-    return G.graph.get("sentence_complexity", 0.0)
+    depths = []
+
+    for _, attrs in G.nodes(data=True):
+
+        depth = attrs.get("dependency_depth")
+
+        if depth is not None:
+            depths.append(depth)
+
+    if not depths:
+        return 0.0
+
+    return np.mean(depths)
 
 
 def compute_lexical_diversity(G):
-    """
-    Type-token ratio over entity tokens.
-    """
 
-    tokens = list(G.nodes())
+    tokens = []
+
+    for _, attrs in G.nodes(data=True):
+
+        token = attrs.get("token_text")
+
+        if token:
+            tokens.append(token.lower())
 
     if not tokens:
         return 0.0
@@ -110,44 +139,99 @@ def compute_lexical_diversity(G):
 
 
 def compute_avg_token_length(G):
-    """
-    Proxy for lexical difficulty.
-    """
 
-    tokens = list(G.nodes())
+    lengths = []
 
-    if not tokens:
+    for _, attrs in G.nodes(data=True):
+
+        token = attrs.get("token_text")
+
+        if token:
+            lengths.append(len(token))
+
+    if not lengths:
         return 0.0
 
-    return sum(len(t) for t in tokens) / len(tokens)
+    return np.mean(lengths)
 
 
 def compute_content_word_ratio(G):
-    """
-    Heuristic: long tokens likely content words.
-    """
 
-    tokens = list(G.nodes())
+    content_count = 0
+    total = 0
 
-    if not tokens:
+    CONTENT_POS = {
+        "NOUN",
+        "VERB",
+        "ADJ",
+        "ADV",
+        "PROPN"
+    }
+
+    for _, attrs in G.nodes(data=True):
+
+        pos = attrs.get("pos")
+
+        if pos:
+            total += 1
+
+            if pos in CONTENT_POS:
+                content_count += 1
+
+    if total == 0:
         return 0.0
 
-    content = [t for t in tokens if len(t) > 5]
-
-    return len(content) / len(tokens)
+    return content_count / total
 
 
 def compute_clause_proxy_complexity(G):
-    """
-    Proxy clause complexity:
-    combines edges + sentence complexity.
-    """
 
-    n = G.number_of_nodes()
-    if n == 0:
+    clause_markers = 0
+
+    CLAUSE_DEPS = {
+        "advcl",
+        "ccomp",
+        "xcomp",
+        "relcl",
+        "acl"
+    }
+
+    for _, attrs in G.nodes(data=True):
+
+        dep = attrs.get("dep")
+
+        if dep in CLAUSE_DEPS:
+            clause_markers += 1
+
+    num_nodes = G.number_of_nodes()
+
+    if num_nodes == 0:
         return 0.0
 
-    base = G.number_of_edges() / n
-    sent = compute_sentence_complexity_score(G)
+    return clause_markers / num_nodes
 
-    return base * (1 + sent)
+
+# ==========================================================
+# NOVEL PAPER METRIC
+# ==========================================================
+
+def compute_clinical_linguistic_complexity_index(
+    sentence_complexity,
+    clause_complexity,
+    entity_density,
+    reasoning_complexity,
+    content_word_ratio
+):
+
+    return (
+        (
+            sentence_complexity
+            * clause_complexity
+            * entity_density
+        )
+        +
+        (
+            reasoning_complexity
+            * content_word_ratio
+        )
+    ) / 2
