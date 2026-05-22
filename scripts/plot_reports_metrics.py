@@ -420,3 +420,228 @@ for group_name, metric_list in METRIC_GROUPS.items():
     plt.close()
 
     print(f"[SAVED] {output_path}")
+
+    # =========================================================
+    # SAVE NUMERICAL RESULTS FOR PAPER WRITING
+    # =========================================================
+
+    REPORT_OUTPUT = os.path.join(
+        OUTPUT_DIR,
+        "metric_summary_report.txt"
+    )
+
+    with open(REPORT_OUTPUT, "w", encoding="utf-8") as f:
+
+        f.write("=" * 80 + "\n")
+        f.write("MEDICAL QA BENCHMARK METRIC SUMMARY REPORT\n")
+        f.write("=" * 80 + "\n\n")
+
+        # =====================================================
+        # PER METRIC DATASET VALUES
+        # =====================================================
+
+        f.write("# PER-DATASET METRIC VALUES\n\n")
+
+        for metric_key, metric_title in KEY_METRICS.items():
+
+            if metric_key not in all_metrics:
+                continue
+
+            f.write("-" * 80 + "\n")
+            f.write(f"{metric_title}\n")
+            f.write("-" * 80 + "\n\n")
+
+            dataset_values = all_metrics[metric_key]
+
+            sorted_items = sorted(
+                dataset_values.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )
+
+            for dataset_name, value in sorted_items:
+
+                dataset_type = (
+                    "Scientific"
+                    if dataset_name in SCIENTIFIC_DATASETS
+                    else "Consumer"
+                )
+
+                f.write(
+                    f"{dataset_name:<20} "
+                    f"{value:>10.4f} "
+                    f"({dataset_type})\n"
+                )
+
+            f.write("\n\n")
+
+        # =====================================================
+        # SCIENTIFIC VS CONSUMER SUMMARY
+        # =====================================================
+
+        f.write("=" * 80 + "\n")
+        f.write("SCIENTIFIC VS CONSUMER AGGREGATE SUMMARY\n")
+        f.write("=" * 80 + "\n\n")
+
+        for metric_key, metric_title in KEY_METRICS.items():
+
+            if metric_key not in all_metrics:
+                continue
+
+            dataset_values = all_metrics[metric_key]
+
+            sci_vals = [
+                v for k, v in dataset_values.items()
+                if k in SCIENTIFIC_DATASETS
+            ]
+
+            con_vals = [
+                v for k, v in dataset_values.items()
+                if k not in SCIENTIFIC_DATASETS
+            ]
+
+            sci_mean = safe_mean(sci_vals)
+            con_mean = safe_mean(con_vals)
+
+            sci_std = np.std(sci_vals) if sci_vals else 0
+            con_std = np.std(con_vals) if con_vals else 0
+
+            diff = sci_mean - con_mean
+
+            f.write(f"{metric_title}\n")
+            f.write("-" * len(metric_title) + "\n")
+
+            f.write(
+                f"Scientific Mean : {sci_mean:.4f}\n"
+            )
+
+            f.write(
+                f"Scientific Std  : {sci_std:.4f}\n"
+            )
+
+            f.write(
+                f"Consumer Mean   : {con_mean:.4f}\n"
+            )
+
+            f.write(
+                f"Consumer Std    : {con_std:.4f}\n"
+            )
+
+            f.write(
+                f"Difference      : {diff:.4f}\n"
+            )
+
+            if diff > 0:
+                f.write(
+                    "Observation     : Scientific datasets score higher.\n"
+                )
+            else:
+                f.write(
+                    "Observation     : Consumer datasets score higher.\n"
+                )
+
+            f.write("\n\n")
+
+        # =====================================================
+        # CATEGORY SUMMARIES
+        # =====================================================
+
+        f.write("=" * 80 + "\n")
+        f.write("CATEGORY-LEVEL SUMMARIES\n")
+        f.write("=" * 80 + "\n\n")
+
+        for group_name, metric_list in METRIC_GROUPS.items():
+
+            f.write(f"{group_name}\n")
+            f.write("-" * len(group_name) + "\n\n")
+
+            scientific_scores = []
+            consumer_scores = []
+
+            for metric_key in metric_list:
+
+                if metric_key not in all_metrics:
+                    continue
+
+                dataset_values = all_metrics[metric_key]
+
+                sci_vals = [
+                    v for k, v in dataset_values.items()
+                    if k in SCIENTIFIC_DATASETS
+                ]
+
+                con_vals = [
+                    v for k, v in dataset_values.items()
+                    if k not in SCIENTIFIC_DATASETS
+                ]
+
+                sci_mean = safe_mean(sci_vals)
+                con_mean = safe_mean(con_vals)
+
+                scientific_scores.append(sci_mean)
+                consumer_scores.append(con_mean)
+
+                f.write(
+                    f"{KEY_METRICS[metric_key]:<45}"
+                    f"Scientific={sci_mean:.4f}   "
+                    f"Consumer={con_mean:.4f}\n"
+                )
+
+            overall_sci = safe_mean(scientific_scores)
+            overall_con = safe_mean(consumer_scores)
+
+            f.write("\n")
+
+            f.write(
+                f"Overall Scientific Average : {overall_sci:.4f}\n"
+            )
+
+            f.write(
+                f"Overall Consumer Average   : {overall_con:.4f}\n"
+            )
+
+            f.write("\n\n")
+
+        # =====================================================
+        # TOP DATASETS
+        # =====================================================
+
+        f.write("=" * 80 + "\n")
+        f.write("TOP PERFORMING DATASETS PER METRIC\n")
+        f.write("=" * 80 + "\n\n")
+
+        for metric_key, metric_title in KEY_METRICS.items():
+
+            if metric_key not in all_metrics:
+                continue
+
+            dataset_values = all_metrics[metric_key]
+
+            best_dataset = max(
+                dataset_values.items(),
+                key=lambda x: x[1]
+            )
+
+            worst_dataset = min(
+                dataset_values.items(),
+                key=lambda x: x[1]
+            )
+
+            f.write(f"{metric_title}\n")
+            f.write("-" * len(metric_title) + "\n")
+
+            f.write(
+                f"Highest : "
+                f"{best_dataset[0]} "
+                f"({best_dataset[1]:.4f})\n"
+            )
+
+            f.write(
+                f"Lowest  : "
+                f"{worst_dataset[0]} "
+                f"({worst_dataset[1]:.4f})\n"
+            )
+
+            f.write("\n")
+
+    print(f"[SAVED] {REPORT_OUTPUT}")
