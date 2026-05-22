@@ -1,14 +1,43 @@
-
-````md
-# KG Eval
+# KG Eval (MedAuditKG Toolkit)
 
 KG Eval is a lightweight toolkit for generating and evaluating knowledge graphs from text datasets.
 
+It is the official implementation of **MedAuditKG**, a graph-based audit framework for healthcare question-answering benchmarks.
+
+This toolkit enables structural and semantic analysis of QA datasets using graph-based representations.
+
+---
+
+# 📄 Paper Reference
+
+This repository implements the methods described in:
+
+**A Graph-Based Audit Framework for Healthcare Question-Answering Benchmarks**
+
+> The paper link will be added upon publication.
+
+---
+
+# ⚠️ Naming Clarification
+
+To avoid confusion:
+
+- **MedAuditKG** → Name of the research framework (paper)
+- **KG Eval** → Name of this codebase / implementation toolkit
+
+Both refer to the same system.
+
+---
+
+# 🧠 Framework Overview
+
 The framework is designed for:
+
 - healthcare and biomedical NLP research
-- hallucination analysis
-- dataset comparison
+- hallucination analysis in QA systems
+- dataset comparison across benchmarks
 - structural and semantic graph evaluation
+- benchmarking dataset complexity via graph metrics
 
 ---
 
@@ -346,5 +375,3 @@ Future improvements:
 Copyright (c) 2026 Sanchari Biswas
 
 This project is licensed under the MIT License.
-
-```
