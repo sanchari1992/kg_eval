@@ -1,3 +1,5 @@
+
+````md
 # KG Eval
 
 KG Eval is a lightweight toolkit for generating and evaluating knowledge graphs from text datasets.
@@ -69,13 +71,31 @@ kg_eval/
 │   └── visualization/
 ├── pyproject.toml
 └── README.md
-```
+````
 
 ---
 
 # Installation
 
-## 1. Create virtual environment
+## Option 1: Install from GitHub (recommended)
+
+```bash
+pip install git+https://github.com/YOUR_USERNAME/kg-eval.git
+```
+
+---
+
+## Option 2: Development install
+
+```bash
+git clone https://github.com/YOUR_USERNAME/kg-eval.git
+cd kg-eval
+pip install -e .
+```
+
+---
+
+## 3. Create virtual environment
 
 ### Windows
 
@@ -93,17 +113,7 @@ source .venv/bin/activate
 
 ---
 
-## 2. Install package
-
-From the project root:
-
-```bash
-pip install -e .
-```
-
----
-
-## 3. Install spaCy language model
+## 4. Install spaCy language model
 
 ```bash
 python -m spacy download en_core_web_sm
@@ -116,27 +126,29 @@ This model is required for entity extraction.
 # Supported Datasets
 
 Currently tested on:
-(QA)
-- MedQA
-- MedMCQA
-- PubMedQA
-- BioASQ
-- BiQA
-- HealthSearchQA
-- LiveQA
-- MedicationQA
-- MedQuAD
-- MediQA
-- MedRevQA
-- MedChangeQA
-- MedAESQA
-- COVID-QA
 
+### QA datasets
 
-(NonQA)
-- Med-HALT
-- MedHallu
-- Medhal
+* MedQA
+* MedMCQA
+* PubMedQA
+* BioASQ
+* BiQA
+* HealthSearchQA
+* LiveQA
+* MedicationQA
+* MedQuAD
+* MediQA
+* MedRevQA
+* MedChangeQA
+* MedAESQA
+* COVID-QA
+
+### Non-QA datasets
+
+* Med-HALT
+* MedHallu
+* Medhal
 
 ---
 
@@ -145,8 +157,7 @@ Currently tested on:
 ## Med-HALT
 
 Dataset:
-
-[Med-HALT Dataset](https://huggingface.co/datasets/openlifescienceai/Med-HALT?utm_source=chatgpt.com)
+[https://huggingface.co/datasets/openlifescienceai/Med-HALT](https://huggingface.co/datasets/openlifescienceai/Med-HALT)
 
 Run:
 
@@ -165,8 +176,7 @@ data/raw/medhalt/
 ## MedHallu
 
 Dataset:
-
-[MedHallu Dataset](https://huggingface.co/datasets/UTAustin-AIHealth/MedHallu?utm_source=chatgpt.com)
+[https://huggingface.co/datasets/UTAustin-AIHealth/MedHallu](https://huggingface.co/datasets/UTAustin-AIHealth/MedHallu)
 
 Run:
 
@@ -191,6 +201,7 @@ scripts/test_graph.py
 ```
 
 This script:
+
 1. Loads a dataset
 2. Extracts the question column
 3. Builds knowledge graphs
@@ -252,15 +263,11 @@ python scripts/test_graph.py ^
 
 # Output
 
-The pipeline generates:
-
 ## Console Output
 
-- dataset information
-- graph statistics
-- sample metrics
-
----
+* dataset information
+* graph statistics
+* sample metrics
 
 ## JSON Report
 
@@ -271,15 +278,15 @@ data/raw/medhalt/report.json
 ```
 
 Contains:
-- dataset-level summary metrics
-- per-graph metrics
 
----
+* dataset-level summary metrics
+* per-graph metrics
 
 ## Graph Visualization
 
 If `--visualize` is enabled:
-- the first graph is displayed using matplotlib
+
+* first graph is rendered using matplotlib
 
 ---
 
@@ -291,9 +298,7 @@ If `--visualize` is enabled:
 python scripts/download_medhalt.py
 ```
 
----
-
-## 2. Run graph pipeline
+## 2. Run pipeline
 
 ```bash
 python scripts/test_graph.py ^
@@ -308,32 +313,38 @@ python scripts/test_graph.py ^
 # Current Limitations
 
 Current graphs use:
-- spaCy entity extraction
-- sequential entity relationships
+
+* spaCy entity extraction
+* sequential entity relationships
 
 This is an MVP graph representation.
 
-Future improvements may include:
-- UMLS concept linking
-- biomedical ontology integration
-- relation extraction
-- semantic graph metrics
-- multi-dataset benchmarking
+Future improvements:
+
+* UMLS concept linking
+* biomedical ontology integration
+* relation extraction
+* semantic graph metrics
+* multi-dataset benchmarking
 
 ---
 
 # Future Roadmap
 
-Planned features:
-
-- SciSpacy biomedical NER
-- UMLS integration
-- ontology-aware graphs
-- semantic metrics
-- graph comparison benchmarking
-- CLI package support
-- publication-ready visualizations
+* SciSpacy biomedical NER
+* UMLS integration
+* ontology-aware graphs
+* semantic metrics
+* graph comparison benchmarking
+* CLI package support
+* publication-ready visualizations
 
 ---
 
 # License
+
+Copyright (c) 2026 Sanchari Biswas
+
+This project is licensed under the MIT License.
+
+```
