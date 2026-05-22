@@ -1,3 +1,5 @@
+import networkx as nx   # ✅ REQUIRED
+
 from kg_eval.metrics.semantic_metrics import (
     compute_entity_type_diversity,
     compute_unique_entity_ratio,
@@ -81,3 +83,40 @@ def compute_basic_metrics(G):
     metrics["reasoning_path_complexity"] = compute_reasoning_path_complexity(G)
 
     return metrics
+
+def compute_dataset_metrics(graphs):
+    all_metrics = []
+
+    for G in graphs:
+        graph_metrics = compute_basic_metrics(G)
+        all_metrics.append(graph_metrics)
+
+    if len(all_metrics) == 0:
+        return {}, []
+
+    summary = {
+        "num_graphs": len(graphs),
+        "avg_nodes": sum(m["num_nodes"] for m in all_metrics) / len(all_metrics),
+        "avg_edges": sum(m["num_edges"] for m in all_metrics) / len(all_metrics),
+        "avg_density": sum(m["density"] for m in all_metrics) / len(all_metrics),
+        "avg_degree": sum(m["avg_degree"] for m in all_metrics) / len(all_metrics),
+        "avg_clustering_coefficient": sum(m["clustering_coefficient"] for m in all_metrics) / len(all_metrics),
+
+        "avg_entity_type_diversity": sum(m["entity_type_diversity"] for m in all_metrics) / len(all_metrics),
+        "avg_unique_entity_ratio": sum(m["unique_entity_ratio"] for m in all_metrics) / len(all_metrics),
+        "avg_relation_entropy": sum(m["relation_entropy"] for m in all_metrics) / len(all_metrics),
+
+        "avg_constraint_complexity": sum(m["constraint_complexity"] for m in all_metrics) / len(all_metrics),
+        "avg_graph_expansion_ratio": sum(m["graph_expansion_ratio"] for m in all_metrics) / len(all_metrics),
+        "avg_structural_reasoning_index": sum(m["structural_reasoning_index"] for m in all_metrics) / len(all_metrics),
+
+        "avg_shortest_path": sum(m["avg_shortest_path"] for m in all_metrics) / len(all_metrics),
+        "avg_branching_factor": sum(m["branching_factor"] for m in all_metrics) / len(all_metrics),
+        "avg_graph_centralization": sum(m["graph_centralization"] for m in all_metrics) / len(all_metrics),
+
+        "avg_entity_interaction_density": sum(m["entity_interaction_density"] for m in all_metrics) / len(all_metrics),
+        "avg_context_expansion_ratio": sum(m["context_expansion_ratio"] for m in all_metrics) / len(all_metrics),
+        "avg_reasoning_path_complexity": sum(m["reasoning_path_complexity"] for m in all_metrics) / len(all_metrics),
+    }
+
+    return summary, all_metrics
