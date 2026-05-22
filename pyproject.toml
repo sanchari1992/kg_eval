@@ -8,9 +8,17 @@ version = "0.1.0"
 description = "Knowledge graph generation and evaluation toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
 
 authors = [
     { name = "Sanchari" }
+]
+
+keywords = ["knowledge-graph", "evaluation", "nlp", "benchmark"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
 ]
 
 dependencies = [
