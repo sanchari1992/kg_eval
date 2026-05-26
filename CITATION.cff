@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the information below."
+
+title: "KG-Eval: Knowledge Graph-Based Benchmark Evaluation Toolkit"
+
+version: 0.1.0
+
+date-released: 2026-05-26
+
+url: "https://github.com/sanchari1992/kg_eval"
+
+repository-code: "https://github.com/sanchari1992/kg_eval"
+
+license: MIT
+
+abstract: >
+  KG-Eval is a lightweight Python toolkit for constructing knowledge graphs
+  from text datasets and evaluating large language model outputs using
+  structural, semantic, reasoning, and linguistic complexity metrics.
+  It supports hallucination analysis across multiple biomedical QA benchmarks
+  including PubMedQA and BioASQ.
+
+keywords:
+  - knowledge graphs
+  - hallucination detection
+  - large language models
+  - biomedical NLP
+  - benchmark evaluation
+  - graph-based metrics
+
+authors:
+  - family-names: "Biswas"
+    given-names: "Sanchari"
+    affiliation: "Temple University"
+
+  - family-names: "Tan"
+    given-names: "Chiu C."
+    affiliation: ""
+
+preferred-citation:
+  type: software
+  title: "A Graph-Based Audit Framework for Healthcare Question-Answering Benchmarks"
+  authors:
+    - family-names: "Biswas"
+      given-names: "Sanchari"
+    - family-names: "Tan"
+      given-names: "Chiu C."
+  year: 2026
+  url: "https://github.com/sanchari1992/kg_eval"
