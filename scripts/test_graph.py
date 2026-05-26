@@ -22,11 +22,15 @@ from kg_eval.visualization.graph_viz import (
 
 def main():
 
-    # -------------------------
-    # start timer
-    # -------------------------
+    # =====================================================
+    # START TIMER
+    # =====================================================
 
     start_time = time.time()
+
+    # =====================================================
+    # ARGUMENT PARSER
+    # =====================================================
 
     parser = argparse.ArgumentParser(
         description="Run KG evaluation pipeline"
@@ -61,9 +65,9 @@ def main():
 
     args = parser.parse_args()
 
-    # -------------------------
-    # load dataset
-    # -------------------------
+    # =====================================================
+    # LOAD DATASET
+    # =====================================================
 
     df = load_dataset(args.file_path)
 
@@ -71,9 +75,22 @@ def main():
     print("Shape:", df.shape)
     print("Columns:", list(df.columns))
 
-    # -------------------------
-    # build graphs
-    # -------------------------
+    # =====================================================
+    # EXTRACT QUESTIONS
+    # =====================================================
+
+    questions = (
+        df[args.question_col]
+        .fillna("")
+        .astype(str)
+        .tolist()
+    )
+
+    print(f"\nLoaded {len(questions)} questions")
+
+    # =====================================================
+    # BUILD GRAPHS
+    # =====================================================
 
     graphs = extract_graphs(
         df,
@@ -82,9 +99,9 @@ def main():
 
     print(f"\nGenerated {len(graphs)} graphs")
 
-    # -------------------------
-    # optional visualization
-    # -------------------------
+    # =====================================================
+    # OPTIONAL VISUALIZATION
+    # =====================================================
 
     if args.visualize and graphs:
 
@@ -93,35 +110,73 @@ def main():
             title="Sample Knowledge Graph"
         )
 
-    # -------------------------
-    # compute metrics
-    # -------------------------
+    # =====================================================
+    # COMPUTE METRICS
+    # =====================================================
 
     summary, per_graph_metrics = compute_dataset_metrics(
-        graphs
+        graphs,
+        questions
     )
+
+    # =====================================================
+    # PRINT DATASET SUMMARY
+    # =====================================================
 
     print("\n=== DATASET SUMMARY ===")
 
     for k, v in summary.items():
         print(f"{k}: {v}")
 
-    # -------------------------
-    # sample metrics preview
-    # -------------------------
+    # =====================================================
+    # SAMPLE GRAPH PREVIEW
+    # =====================================================
 
     print("\n=== SAMPLE GRAPH METRICS ===")
 
-    for i, m in enumerate(per_graph_metrics[:3]):
+    for i, entry in enumerate(per_graph_metrics[:3]):
 
-        print(f"\nGraph {i + 1}")
+        print(f"\n=================================================")
+        print(f"Graph {i + 1}")
+        print(f"=================================================")
 
-        for k, v in m.items():
+        # -------------------------------------------------
+        # QUESTION
+        # -------------------------------------------------
+
+        print("\nQuestion:")
+        print(entry["question"])
+
+        # -------------------------------------------------
+        # METRICS
+        # -------------------------------------------------
+
+        print("\nMetrics:")
+
+        for k, v in entry["metrics"].items():
             print(f"  {k}: {v}")
 
-    # -------------------------
-    # save report
-    # -------------------------
+        # -------------------------------------------------
+        # GRAPH NODES
+        # -------------------------------------------------
+
+        print("\nNodes:")
+
+        for node in entry["graph"]["nodes"]:
+            print(node)
+
+        # -------------------------------------------------
+        # GRAPH EDGES
+        # -------------------------------------------------
+
+        print("\nEdges:")
+
+        for edge in entry["graph"]["edges"]:
+            print(edge)
+
+    # =====================================================
+    # SAVE REPORT
+    # =====================================================
 
     report_path = Path(args.report_path)
 
@@ -136,9 +191,11 @@ def main():
         str(report_path)
     )
 
-    # -------------------------
-    # end timer
-    # -------------------------
+    print(f"\nReport saved to: {report_path}")
+
+    # =====================================================
+    # END TIMER
+    # =====================================================
 
     end_time = time.time()
 
@@ -146,6 +203,10 @@ def main():
 
     print(f"\nTotal runtime: {total_time:.2f} seconds")
 
+
+# =========================================================
+# ENTRY POINT
+# =========================================================
 
 if __name__ == "__main__":
     main()
