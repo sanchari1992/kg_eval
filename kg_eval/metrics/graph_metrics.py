@@ -1,3 +1,5 @@
+# graph_metrics.py
+
 import networkx as nx
 
 from kg_eval.metrics.semantic_metrics import (
@@ -118,18 +120,32 @@ def compute_basic_metrics(G):
         compute_reasoning_path_complexity(G)
     )
 
-    # =========================
-    # LINGUISTIC / NLP
-    # =========================
+    # =====================================================
+    # NLP / LINGUISTIC
+    # =====================================================
 
-    metrics["sentence_complexity"] = compute_sentence_complexity_score(G)
-    metrics["lexical_diversity"] = compute_lexical_diversity(G)
-    metrics["avg_token_length"] = compute_avg_token_length(G)
-    metrics["content_word_ratio"] = compute_content_word_ratio(G)
-    metrics["clause_proxy_complexity"] = compute_clause_proxy_complexity(G)
+    metrics["sentence_complexity"] = (
+        compute_sentence_complexity_score(G)
+    )
+
+    metrics["lexical_diversity"] = (
+        compute_lexical_diversity(G)
+    )
+
+    metrics["avg_token_length"] = (
+        compute_avg_token_length(G)
+    )
+
+    metrics["content_word_ratio"] = (
+        compute_content_word_ratio(G)
+    )
+
+    metrics["clause_proxy_complexity"] = (
+        compute_clause_proxy_complexity(G)
+    )
 
     # =====================================================
-    # COMBINED CLINICAL LINGUISTIC COMPLEXITY INDEX
+    # COMBINED INDEX
     # =====================================================
 
     metrics["clinical_linguistic_complexity_index"] = (
@@ -146,21 +162,85 @@ def compute_basic_metrics(G):
 
 
 # =========================================================
+# SERIALIZATION HELPERS
+# =========================================================
+
+def serialize_graph(G):
+
+    nodes = []
+
+    for node_id in G.nodes():
+
+        node_data = dict(G.nodes[node_id])
+
+        nodes.append({
+            "id": node_id,
+            **node_data
+        })
+
+    edges = []
+
+    for u, v in G.edges():
+
+        edges.append({
+            "source": u,
+            "target": v
+        })
+
+    return {
+        "nodes": nodes,
+        "edges": edges
+    }
+
+
+# =========================================================
 # DATASET-LEVEL AGGREGATION
 # =========================================================
 
-def compute_dataset_metrics(graphs):
+def compute_dataset_metrics(graphs, questions=None):
 
-    all_metrics = []
+    all_entries = []
 
-    for G in graphs:
+    # =====================================================
+    # PER-GRAPH PROCESSING
+    # =====================================================
+
+    for idx, G in enumerate(graphs):
 
         graph_metrics = compute_basic_metrics(G)
 
-        all_metrics.append(graph_metrics)
+        question = (
+            questions[idx]
+            if questions is not None
+            else None
+        )
 
-    if len(all_metrics) == 0:
+        graph_data = serialize_graph(G)
+
+        entry = {
+
+            "question": question,
+
+            "graph": {
+                "nodes": graph_data["nodes"],
+                "edges": graph_data["edges"]
+            },
+
+            "metrics": graph_metrics
+        }
+
+        all_entries.append(entry)
+
+    # =====================================================
+    # EMPTY SAFETY
+    # =====================================================
+
+    if len(all_entries) == 0:
         return {}, []
+
+    # =====================================================
+    # SUMMARY METRICS
+    # =====================================================
 
     summary = {
 
@@ -172,104 +252,148 @@ def compute_dataset_metrics(graphs):
             len(graphs),
 
         "avg_nodes":
-            sum(m["num_nodes"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["num_nodes"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_edges":
-            sum(m["num_edges"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["num_edges"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_density":
-            sum(m["density"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["density"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_degree":
-            sum(m["avg_degree"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["avg_degree"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_clustering_coefficient":
-            sum(m["clustering_coefficient"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["clustering_coefficient"]
+                for m in all_entries
+            ) / len(all_entries),
 
         # =================================================
         # SEMANTIC
         # =================================================
 
         "avg_entity_type_diversity":
-            sum(m["entity_type_diversity"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["entity_type_diversity"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_unique_entity_ratio":
-            sum(m["unique_entity_ratio"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["unique_entity_ratio"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_relation_entropy":
-            sum(m["relation_entropy"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["relation_entropy"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_entity_interaction_density":
-            sum(m["entity_interaction_density"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["entity_interaction_density"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_context_expansion_ratio":
-            sum(m["context_expansion_ratio"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["context_expansion_ratio"]
+                for m in all_entries
+            ) / len(all_entries),
 
         # =================================================
         # REASONING
         # =================================================
 
         "avg_constraint_complexity":
-            sum(m["constraint_complexity"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["constraint_complexity"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_graph_expansion_ratio":
-            sum(m["graph_expansion_ratio"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["graph_expansion_ratio"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_structural_reasoning_index":
-            sum(m["structural_reasoning_index"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["structural_reasoning_index"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_shortest_path":
-            sum(m["avg_shortest_path"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["avg_shortest_path"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_branching_factor":
-            sum(m["branching_factor"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["branching_factor"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_graph_centralization":
-            sum(m["graph_centralization"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["graph_centralization"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_reasoning_path_complexity":
-            sum(m["reasoning_path_complexity"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["reasoning_path_complexity"]
+                for m in all_entries
+            ) / len(all_entries),
 
         # =================================================
         # NLP / LINGUISTIC
         # =================================================
 
         "avg_sentence_complexity":
-            sum(m["sentence_complexity"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["sentence_complexity"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_lexical_diversity":
-            sum(m["lexical_diversity"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["lexical_diversity"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_avg_token_length":
-            sum(m["avg_token_length"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["avg_token_length"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_content_word_ratio":
-            sum(m["content_word_ratio"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["content_word_ratio"]
+                for m in all_entries
+            ) / len(all_entries),
 
         "avg_clause_proxy_complexity":
-            sum(m["clause_proxy_complexity"] for m in all_metrics)
-            / len(all_metrics),
+            sum(
+                m["metrics"]["clause_proxy_complexity"]
+                for m in all_entries
+            ) / len(all_entries),
 
         # =================================================
         # COMBINED INDEX
@@ -277,9 +401,11 @@ def compute_dataset_metrics(graphs):
 
         "avg_clinical_linguistic_complexity_index":
             sum(
-                m["clinical_linguistic_complexity_index"]
-                for m in all_metrics
-            ) / len(all_metrics),
+                m["metrics"][
+                    "clinical_linguistic_complexity_index"
+                ]
+                for m in all_entries
+            ) / len(all_entries),
     }
 
-    return summary, all_metrics
+    return summary, all_entries
