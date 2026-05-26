@@ -36,11 +36,14 @@ DATASET_ORDER = [
     "mediqa",
     "healthsearchqa",
     "medicationqa",
-
     "healthbench",
 ]
 
-SCIENTIFIC_DATASETS = set(DATASET_ORDER[:13])
+# Existing benchmarks = all traditional benchmarks
+EXISTING_BENCHMARKS = set(DATASET_ORDER[:13])
+
+# HealthBench benchmark
+HEALTHBENCH_BENCHMARK = set(DATASET_ORDER[13:])
 
 
 # =========================
@@ -165,7 +168,12 @@ for metric_name, dataset_values in all_metrics.items():
 
         labels.append(d)
         values.append(dataset_values[d])
-        colors.append("steelblue" if d in SCIENTIFIC_DATASETS else "darkorange")
+
+        colors.append(
+            "steelblue"
+            if d in EXISTING_BENCHMARKS
+            else "darkorange"
+        )
 
     if not labels:
         continue
@@ -178,8 +186,8 @@ for metric_name, dataset_values in all_metrics.items():
     plt.ylabel(metric_name)
 
     plt.legend(handles=[
-        Patch(facecolor="steelblue", label="Scientific"),
-        Patch(facecolor="darkorange", label="Consumer")
+        Patch(facecolor="steelblue", label="Existing Benchmarks"),
+        Patch(facecolor="darkorange", label="HealthBench")
     ])
 
     plt.tight_layout()
@@ -203,24 +211,25 @@ for metric_key, metric_title in KEY_METRICS.items():
 
     dataset_values = all_metrics[metric_key]
 
-    sci_vals, con_vals = [], []
+    existing_vals, healthbench_vals = [], []
 
     labels, values, colors = [], [], []
 
     for d in DATASET_ORDER:
 
         v = dataset_values.get(d, np.nan)
+
         if not isinstance(v, (int, float)) or np.isnan(v):
             continue
 
         labels.append(d)
         values.append(v)
 
-        if d in SCIENTIFIC_DATASETS:
-            sci_vals.append(v)
+        if d in EXISTING_BENCHMARKS:
+            existing_vals.append(v)
             colors.append("steelblue")
         else:
-            con_vals.append(v)
+            healthbench_vals.append(v)
             colors.append("darkorange")
 
     # -------------------------
@@ -228,20 +237,47 @@ for metric_key, metric_title in KEY_METRICS.items():
     # -------------------------
 
     plt.figure(figsize=(16, 7))
-    bars = plt.bar(labels, values, color=colors)
+
+    bars = plt.bar(
+        labels,
+        values,
+        color=colors
+    )
 
     plt.xticks(rotation=45, ha="right")
     plt.title(metric_title)
 
     for b in bars:
+
         h = b.get_height()
-        plt.text(b.get_x() + b.get_width()/2, h, f"{h:.2f}",
-                 ha="center", va="bottom", fontsize=8)
+
+        plt.text(
+            b.get_x() + b.get_width()/2,
+            h,
+            f"{h:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=8
+        )
+
+    plt.legend(handles=[
+        Patch(facecolor="steelblue", label="Existing Benchmarks"),
+        Patch(facecolor="darkorange", label="HealthBench")
+    ])
 
     plt.tight_layout()
 
-    out = os.path.join(OUTPUT_DIR, f"conference_{metric_key}.png")
-    plt.savefig(out, dpi=400, bbox_inches="tight")
+    out = os.path.join(
+        OUTPUT_DIR,
+        f"conference_{metric_key}.png"
+    )
+
+    plt.savefig(
+        out,
+        dpi=400,
+        bbox_inches="tight"
+    )
+
     plt.close()
 
     print(f"[SAVED] {out}")
@@ -251,18 +287,19 @@ for metric_key, metric_title in KEY_METRICS.items():
     # -------------------------
 
     means = [
-        safe_mean(sci_vals),
-        safe_mean(con_vals)
+        safe_mean(existing_vals),
+        safe_mean(healthbench_vals)
     ]
 
     stds = [
-        np.std(sci_vals) if sci_vals else 0,
-        np.std(con_vals) if con_vals else 0
+        np.std(existing_vals) if existing_vals else 0,
+        np.std(healthbench_vals) if healthbench_vals else 0
     ]
 
     plt.figure(figsize=(6, 6))
+
     plt.bar(
-        ["Scientific", "Consumer"],
+        ["Existing Benchmarks", "HealthBench"],
         means,
         yerr=stds,
         capsize=8,
@@ -270,68 +307,132 @@ for metric_key, metric_title in KEY_METRICS.items():
     )
 
     plt.title(f"Average {metric_title}")
+
     plt.tight_layout()
 
-    out = os.path.join(OUTPUT_DIR, f"grouped_{metric_key}.png")
-    plt.savefig(out, dpi=400, bbox_inches="tight")
+    out = os.path.join(
+        OUTPUT_DIR,
+        f"grouped_{metric_key}.png"
+    )
+
+    plt.savefig(
+        out,
+        dpi=400,
+        bbox_inches="tight"
+    )
+
     plt.close()
 
     print(f"[SAVED] {out}")
 
 
 # =========================
-# NORMALIZED COMPARISON (FIXED & SAFE)
+# NORMALIZED COMPARISON
 # =========================
 
 metric_keys = list(KEY_METRICS.keys())
 
-sci_means, con_means = [], []
+existing_means, healthbench_means = [], []
 
 for m in metric_keys:
 
     d = all_metrics.get(m, {})
 
-    sci = [v for k, v in d.items() if k in SCIENTIFIC_DATASETS]
-    con = [v for k, v in d.items() if k not in SCIENTIFIC_DATASETS]
+    existing = [
+        v for k, v in d.items()
+        if k in EXISTING_BENCHMARKS
+    ]
 
-    sci_means.append(safe_mean(sci))
-    con_means.append(safe_mean(con))
+    healthbench = [
+        v for k, v in d.items()
+        if k in HEALTHBENCH_BENCHMARK
+    ]
 
+    existing_means.append(
+        safe_mean(existing)
+    )
 
-global_max = max(sci_means + con_means + [1e-8])
+    healthbench_means.append(
+        safe_mean(healthbench)
+    )
 
-sci_norm = [v / global_max for v in sci_means]
-con_norm = [v / global_max for v in con_means]
+global_max = max(
+    existing_means +
+    healthbench_means +
+    [1e-8]
+)
+
+existing_norm = [
+    v / global_max
+    for v in existing_means
+]
+
+healthbench_norm = [
+    v / global_max
+    for v in healthbench_means
+]
 
 x = np.arange(len(metric_keys))
 width = 0.35
 
 plt.figure(figsize=(12, 6))
 
-plt.bar(x - width/2, sci_norm, width, label="Scientific", color="steelblue")
-plt.bar(x + width/2, con_norm, width, label="Consumer", color="darkorange")
+plt.bar(
+    x - width/2,
+    existing_norm,
+    width,
+    label="Existing Benchmarks",
+    color="steelblue"
+)
 
-plt.xticks(x, [KEY_METRICS[m] for m in metric_keys], rotation=20)
-plt.title("Normalized Benchmark Complexity Comparison")
+plt.bar(
+    x + width/2,
+    healthbench_norm,
+    width,
+    label="HealthBench",
+    color="darkorange"
+)
+
+plt.xticks(
+    x,
+    [KEY_METRICS[m] for m in metric_keys],
+    rotation=20
+)
+
+plt.title(
+    "Normalized Benchmark Complexity Comparison"
+)
 
 plt.legend()
+
 plt.tight_layout()
 
-out = os.path.join(OUTPUT_DIR, "normalized_complexity_comparison.png")
-plt.savefig(out, dpi=400, bbox_inches="tight")
+out = os.path.join(
+    OUTPUT_DIR,
+    "normalized_complexity_comparison.png"
+)
+
+plt.savefig(
+    out,
+    dpi=400,
+    bbox_inches="tight"
+)
+
 plt.close()
 
 print(f"[SAVED] {out}")
 print("\nAll metric plots generated successfully.")
 
-# =========================================================
-# CATEGORY-LEVEL COMPARISON PLOTS
-# =========================================================
+
+# =========================
+# CATEGORY-LEVEL COMPARISON
+# =========================
 
 for group_name, metric_list in METRIC_GROUPS.items():
 
-    scientific_scores = []
-    consumer_scores = []
+    existing_scores = []
+    healthbench_scores = []
+
     labels = []
 
     for metric_key in metric_list:
@@ -341,22 +442,22 @@ for group_name, metric_list in METRIC_GROUPS.items():
 
         dataset_values = all_metrics[metric_key]
 
-        sci_vals = [
+        existing_vals = [
             v for k, v in dataset_values.items()
-            if k in SCIENTIFIC_DATASETS
+            if k in EXISTING_BENCHMARKS
         ]
 
-        con_vals = [
+        healthbench_vals = [
             v for k, v in dataset_values.items()
-            if k not in SCIENTIFIC_DATASETS
+            if k in HEALTHBENCH_BENCHMARK
         ]
 
-        scientific_scores.append(
-            safe_mean(sci_vals)
+        existing_scores.append(
+            safe_mean(existing_vals)
         )
 
-        consumer_scores.append(
-            safe_mean(con_vals)
+        healthbench_scores.append(
+            safe_mean(healthbench_vals)
         )
 
         labels.append(
@@ -373,17 +474,17 @@ for group_name, metric_list in METRIC_GROUPS.items():
 
     plt.bar(
         x - width/2,
-        scientific_scores,
+        existing_scores,
         width,
-        label="Scientific",
+        label="Existing Benchmarks",
         color="steelblue"
     )
 
     plt.bar(
         x + width/2,
-        consumer_scores,
+        healthbench_scores,
         width,
-        label="Consumer",
+        label="HealthBench",
         color="darkorange"
     )
 
@@ -397,7 +498,7 @@ for group_name, metric_list in METRIC_GROUPS.items():
     plt.ylabel("Average Score")
 
     plt.title(
-        f"{group_name}: Scientific vs Consumer QA",
+        f"{group_name}: Existing Benchmarks vs HealthBench",
         fontsize=14,
         fontweight="bold"
     )
@@ -420,228 +521,3 @@ for group_name, metric_list in METRIC_GROUPS.items():
     plt.close()
 
     print(f"[SAVED] {output_path}")
-
-    # =========================================================
-    # SAVE NUMERICAL RESULTS FOR PAPER WRITING
-    # =========================================================
-
-    REPORT_OUTPUT = os.path.join(
-        OUTPUT_DIR,
-        "metric_summary_report.txt"
-    )
-
-    with open(REPORT_OUTPUT, "w", encoding="utf-8") as f:
-
-        f.write("=" * 80 + "\n")
-        f.write("MEDICAL QA BENCHMARK METRIC SUMMARY REPORT\n")
-        f.write("=" * 80 + "\n\n")
-
-        # =====================================================
-        # PER METRIC DATASET VALUES
-        # =====================================================
-
-        f.write("# PER-DATASET METRIC VALUES\n\n")
-
-        for metric_key, metric_title in KEY_METRICS.items():
-
-            if metric_key not in all_metrics:
-                continue
-
-            f.write("-" * 80 + "\n")
-            f.write(f"{metric_title}\n")
-            f.write("-" * 80 + "\n\n")
-
-            dataset_values = all_metrics[metric_key]
-
-            sorted_items = sorted(
-                dataset_values.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )
-
-            for dataset_name, value in sorted_items:
-
-                dataset_type = (
-                    "Scientific"
-                    if dataset_name in SCIENTIFIC_DATASETS
-                    else "Consumer"
-                )
-
-                f.write(
-                    f"{dataset_name:<20} "
-                    f"{value:>10.4f} "
-                    f"({dataset_type})\n"
-                )
-
-            f.write("\n\n")
-
-        # =====================================================
-        # SCIENTIFIC VS CONSUMER SUMMARY
-        # =====================================================
-
-        f.write("=" * 80 + "\n")
-        f.write("SCIENTIFIC VS CONSUMER AGGREGATE SUMMARY\n")
-        f.write("=" * 80 + "\n\n")
-
-        for metric_key, metric_title in KEY_METRICS.items():
-
-            if metric_key not in all_metrics:
-                continue
-
-            dataset_values = all_metrics[metric_key]
-
-            sci_vals = [
-                v for k, v in dataset_values.items()
-                if k in SCIENTIFIC_DATASETS
-            ]
-
-            con_vals = [
-                v for k, v in dataset_values.items()
-                if k not in SCIENTIFIC_DATASETS
-            ]
-
-            sci_mean = safe_mean(sci_vals)
-            con_mean = safe_mean(con_vals)
-
-            sci_std = np.std(sci_vals) if sci_vals else 0
-            con_std = np.std(con_vals) if con_vals else 0
-
-            diff = sci_mean - con_mean
-
-            f.write(f"{metric_title}\n")
-            f.write("-" * len(metric_title) + "\n")
-
-            f.write(
-                f"Scientific Mean : {sci_mean:.4f}\n"
-            )
-
-            f.write(
-                f"Scientific Std  : {sci_std:.4f}\n"
-            )
-
-            f.write(
-                f"Consumer Mean   : {con_mean:.4f}\n"
-            )
-
-            f.write(
-                f"Consumer Std    : {con_std:.4f}\n"
-            )
-
-            f.write(
-                f"Difference      : {diff:.4f}\n"
-            )
-
-            if diff > 0:
-                f.write(
-                    "Observation     : Scientific datasets score higher.\n"
-                )
-            else:
-                f.write(
-                    "Observation     : Consumer datasets score higher.\n"
-                )
-
-            f.write("\n\n")
-
-        # =====================================================
-        # CATEGORY SUMMARIES
-        # =====================================================
-
-        f.write("=" * 80 + "\n")
-        f.write("CATEGORY-LEVEL SUMMARIES\n")
-        f.write("=" * 80 + "\n\n")
-
-        for group_name, metric_list in METRIC_GROUPS.items():
-
-            f.write(f"{group_name}\n")
-            f.write("-" * len(group_name) + "\n\n")
-
-            scientific_scores = []
-            consumer_scores = []
-
-            for metric_key in metric_list:
-
-                if metric_key not in all_metrics:
-                    continue
-
-                dataset_values = all_metrics[metric_key]
-
-                sci_vals = [
-                    v for k, v in dataset_values.items()
-                    if k in SCIENTIFIC_DATASETS
-                ]
-
-                con_vals = [
-                    v for k, v in dataset_values.items()
-                    if k not in SCIENTIFIC_DATASETS
-                ]
-
-                sci_mean = safe_mean(sci_vals)
-                con_mean = safe_mean(con_vals)
-
-                scientific_scores.append(sci_mean)
-                consumer_scores.append(con_mean)
-
-                f.write(
-                    f"{KEY_METRICS[metric_key]:<45}"
-                    f"Scientific={sci_mean:.4f}   "
-                    f"Consumer={con_mean:.4f}\n"
-                )
-
-            overall_sci = safe_mean(scientific_scores)
-            overall_con = safe_mean(consumer_scores)
-
-            f.write("\n")
-
-            f.write(
-                f"Overall Scientific Average : {overall_sci:.4f}\n"
-            )
-
-            f.write(
-                f"Overall Consumer Average   : {overall_con:.4f}\n"
-            )
-
-            f.write("\n\n")
-
-        # =====================================================
-        # TOP DATASETS
-        # =====================================================
-
-        f.write("=" * 80 + "\n")
-        f.write("TOP PERFORMING DATASETS PER METRIC\n")
-        f.write("=" * 80 + "\n\n")
-
-        for metric_key, metric_title in KEY_METRICS.items():
-
-            if metric_key not in all_metrics:
-                continue
-
-            dataset_values = all_metrics[metric_key]
-
-            best_dataset = max(
-                dataset_values.items(),
-                key=lambda x: x[1]
-            )
-
-            worst_dataset = min(
-                dataset_values.items(),
-                key=lambda x: x[1]
-            )
-
-            f.write(f"{metric_title}\n")
-            f.write("-" * len(metric_title) + "\n")
-
-            f.write(
-                f"Highest : "
-                f"{best_dataset[0]} "
-                f"({best_dataset[1]:.4f})\n"
-            )
-
-            f.write(
-                f"Lowest  : "
-                f"{worst_dataset[0]} "
-                f"({worst_dataset[1]:.4f})\n"
-            )
-
-            f.write("\n")
-
-    print(f"[SAVED] {REPORT_OUTPUT}")

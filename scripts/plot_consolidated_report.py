@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -6,20 +5,6 @@ import numpy as np
 # =========================================================
 # DATA
 # =========================================================
-
-# metrics = [
-#     "Entity Interaction Density",
-#     "Reasoning Path Complexity",
-#     "Context Expansion Ratio",
-#     "Sentence Complexity",
-#     "Lexical Diversity",
-#     "Content Word Ratio",
-#     "Clause Complexity Proxy",
-#     "Clinical Linguistic Complexity Index"
-# ]
-
-# existing_benchmarks = [0.09, 0.3, 0.1, 2.9, 0.99, 0.73, 0.0018, 0.09]
-# healthbench = [0.5, 12.8, 1.0, 2.8, 0.98, 0.73, 0.0021, 3.41]
 
 metrics = [
     "Entity Interaction Density",
@@ -36,13 +21,10 @@ healthbench = [0.5, 12.8, 1.0, 3.41]
 # SETUP
 # =========================================================
 
-# fig, axes = plt.subplots(2, 4, figsize=(18, 8))
-# axes = axes.flatten()
-
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 axes = axes.flatten()
 
-x = np.arange(2)
+x = np.array([0, 0.6])
 labels = ["Existing Benchmarks", "HealthBench"]
 
 # Two distinct colors
@@ -61,22 +43,46 @@ for i, ax in enumerate(axes):
         x,
         values,
         color=colors,
-        width=0.55
+        width=0.38
     )
 
-    # Rounded bar edges (works visually with edge styling)
+    # Bar styling
     for bar in bars:
         bar.set_linewidth(0)
         bar.set_alpha(0.95)
 
-    ax.set_title(metrics[i], fontsize=11, pad=10)
+    # Add value labels on bars
+    for bar in bars:
+        height = bar.get_height()
+
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + (max(values) * 0.03),
+            f"{height:.2f}",
+            ha='center',
+            va='bottom',
+            fontsize=10.5,
+            fontweight='bold'
+        )
+
+    # Extra vertical space for labels
+    ax.set_ylim(0, max(values) * 1.22)
+
+    ax.set_title(
+        metrics[i],
+        fontsize=12.5,
+        pad=10
+    )
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=15, fontsize=9)
+    ax.set_xticklabels(
+        labels,
+        rotation=15,
+        fontsize=10.5
+    )
 
-    ax.tick_params(axis='y', labelsize=9)
+    ax.tick_params(axis='y', labelsize=10.5)
 
-    # Cleaner look
     for spine in ax.spines.values():
         spine.set_visible(True)
         spine.set_linewidth(1.0)
@@ -96,4 +102,3 @@ fig.suptitle(
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 
 plt.show()
-
