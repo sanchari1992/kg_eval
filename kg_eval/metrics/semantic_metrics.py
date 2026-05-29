@@ -2,7 +2,6 @@ from collections import Counter
 import math
 import numpy as np
 
-
 # ==========================================================
 # BASIC ENTITY METRICS
 # ==========================================================
@@ -235,3 +234,44 @@ def compute_clinical_linguistic_complexity_index(
             * content_word_ratio
         )
     ) / 2
+
+
+# # ==========================================================
+# # DERIVED LINGUISTIC COMPLEXITY
+# # ==========================================================
+
+# def compute_derived_linguistic_complexity(G):
+#     """
+#     LC = average of normalized:
+#         - sentence_complexity
+#         - clause_proxy_complexity
+#         - content_word_ratio
+#         - lexical_diversity
+#     """
+
+#     sc = compute_sentence_complexity_score(G)
+#     cd = compute_clause_proxy_complexity(G)
+#     cwr = compute_content_word_ratio(G)
+#     ttr = compute_lexical_diversity(G)
+
+#     # normalization (bounded-safe transforms)
+#     sc_n = sc / (sc + 1.0) if sc > 0 else 0.0
+#     cd_n = cd
+#     cwr_n = cwr
+#     ttr_n = ttr
+
+#     lc = 0.25 * (sc_n + cd_n + cwr_n + ttr_n)
+
+#     return float(lc)
+
+# def compute_overall_complexity_index(G, alpha=0.5):
+#     """
+#     TC = alpha * SC + (1 - alpha) * LC
+#     """
+
+#     sc = compute_derived_structural_complexity(G)
+#     lc = compute_derived_linguistic_complexity(G)
+
+#     tc = alpha * sc + (1.0 - alpha) * lc
+
+#     return float(tc)

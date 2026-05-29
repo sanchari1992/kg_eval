@@ -23,7 +23,10 @@ from kg_eval.metrics.reasoning_metrics import (
     compute_avg_shortest_path,
     compute_branching_factor,
     compute_graph_centralization,
-    compute_reasoning_path_complexity
+    compute_reasoning_path_complexity,
+    compute_derived_structural_complexity,
+    compute_derived_linguistic_complexity,
+    compute_overall_complexity_index
 )
 
 
@@ -156,6 +159,22 @@ def compute_basic_metrics(G):
             metrics["reasoning_path_complexity"],
             metrics["content_word_ratio"]
         )
+    )
+
+    # =====================================================
+    # DERIVED COMPLEXITY INDICES
+    # =====================================================
+
+    metrics["derived_structural_complexity"] = (
+        compute_derived_structural_complexity(G)
+    )
+
+    metrics["derived_linguistic_complexity"] = (
+        compute_derived_linguistic_complexity(G)
+    )
+
+    metrics["overall_complexity_index"] = (
+        compute_overall_complexity_index(G)
     )
 
     return metrics
@@ -404,6 +423,24 @@ def compute_dataset_metrics(graphs, questions=None):
                 m["metrics"][
                     "clinical_linguistic_complexity_index"
                 ]
+                for m in all_entries
+            ) / len(all_entries),
+        
+        "avg_derived_structural_complexity":
+            sum(
+                m["metrics"]["derived_structural_complexity"]
+                for m in all_entries
+            ) / len(all_entries),
+
+        "avg_derived_linguistic_complexity":
+            sum(
+                m["metrics"]["derived_linguistic_complexity"]
+                for m in all_entries
+            ) / len(all_entries),
+
+        "avg_overall_complexity_index":
+            sum(
+                m["metrics"]["overall_complexity_index"]
                 for m in all_entries
             ) / len(all_entries),
     }

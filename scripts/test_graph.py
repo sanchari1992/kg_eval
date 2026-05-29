@@ -125,8 +125,20 @@ def main():
 
     print("\n=== DATASET SUMMARY ===")
 
+    DERIVED_KEYS = {
+        "avg_derived_structural_complexity",
+        "avg_derived_linguistic_complexity",
+        "avg_overall_complexity_index"
+    }
+
     for k, v in summary.items():
-        print(f"{k}: {v}")
+
+        if k in DERIVED_KEYS:
+            prefix = "[DERIVED]"
+        else:
+            prefix = " "
+
+        print(f"{prefix} {k}: {v}")
 
     # =====================================================
     # SAMPLE GRAPH PREVIEW
@@ -154,7 +166,20 @@ def main():
         print("\nMetrics:")
 
         for k, v in entry["metrics"].items():
-            print(f"  {k}: {v}")
+            print("\nMetrics:")
+
+            STRUCT_KEYS = {
+                "derived_structural_complexity",
+                "derived_linguistic_complexity",
+                "overall_complexity_index"
+            }
+
+            for k, v in entry["metrics"].items():
+
+                if k in STRUCT_KEYS:
+                    print(f"  ⭐ {k}: {v}")
+                else:
+                    print(f"  {k}: {v}")
 
         # -------------------------------------------------
         # GRAPH NODES
