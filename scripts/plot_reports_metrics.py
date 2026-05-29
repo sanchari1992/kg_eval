@@ -114,6 +114,19 @@ KEY_METRICS = {
 
     "avg_clinical_linguistic_complexity_index":
         "Clinical Linguistic Complexity Index (CLCI)",
+    
+    # -----------------------------------------
+    # Derived Complexity Metrics
+    # -----------------------------------------
+
+    "avg_derived_structural_complexity":
+        "Derived Structural Complexity (SC)",
+
+    "avg_derived_linguistic_complexity":
+        "Derived Linguistic Complexity (LC)",
+
+    "avg_overall_complexity_index":
+        "Overall Complexity Index (TC)",
 }
 
 
@@ -138,6 +151,12 @@ METRIC_GROUPS = {
     "Hybrid Complexity Metrics": [
 
         "avg_clinical_linguistic_complexity_index"
+    ],
+    "Derived Complexity Metrics": [
+
+        "avg_derived_structural_complexity",
+        "avg_derived_linguistic_complexity",
+        "avg_overall_complexity_index",
     ]
 }
 
@@ -462,7 +481,16 @@ for metric_key, metric_title in KEY_METRICS.items():
 # NORMALIZED COMPARISON
 # =========================
 
-metric_keys = list(KEY_METRICS.keys())
+metric_keys = [
+
+    # existing groups first
+    *METRIC_GROUPS["Reasoning Metrics"],
+    *METRIC_GROUPS["Linguistic Metrics"],
+    *METRIC_GROUPS["Hybrid Complexity Metrics"],
+
+    # new derived group LAST (important for paper clarity)
+    *METRIC_GROUPS["Derived Complexity Metrics"],
+]
 
 existing_means = []
 healthbench_means = []
