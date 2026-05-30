@@ -255,7 +255,7 @@ for metric_name, dataset_values in all_metrics.items():
 
             if d in EXISTING_BENCHMARKS
 
-            else "darkorange"
+            else "steelblue"
         )
 
     if not labels:
@@ -285,7 +285,7 @@ for metric_name, dataset_values in all_metrics.items():
         ),
 
         Patch(
-            facecolor="darkorange",
+            facecolor="steelblue",
             label="HealthBench"
         )
     ])
@@ -354,7 +354,7 @@ for metric_key, metric_title in KEY_METRICS.items():
         else:
 
             healthbench_vals.append(v)
-            colors.append("darkorange")
+            colors.append("steelblue")
 
     # -------------------------
     # Per-dataset plot
@@ -396,7 +396,7 @@ for metric_key, metric_title in KEY_METRICS.items():
         ),
 
         Patch(
-            facecolor="darkorange",
+            facecolor="steelblue",
             label="HealthBench"
         )
     ])
@@ -451,7 +451,7 @@ for metric_key, metric_title in KEY_METRICS.items():
 
         color=[
             "steelblue",
-            "darkorange"
+            "steelblue"
         ]
     )
 
@@ -555,7 +555,7 @@ plt.bar(
     healthbench_norm,
     width,
     label="HealthBench",
-    color="darkorange"
+    color="steelblue"
 )
 
 plt.xticks(
@@ -657,7 +657,7 @@ for group_name, metric_list in METRIC_GROUPS.items():
         healthbench_scores,
         width,
         label="HealthBench",
-        color="darkorange"
+        color="steelblue"
     )
 
     plt.xticks(
