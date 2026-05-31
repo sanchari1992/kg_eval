@@ -120,7 +120,7 @@ def compute_derived_linguistic_complexity(G):
 
     sc_n = sc / (sc + 1.0) if sc > 0 else 0.0
 
-    lc = 0.25 * (sc_n + cd + cwr + ttr)
+    lc = (1/3) * (sc_n + cwr + ttr)
 
     return float(lc)
 
